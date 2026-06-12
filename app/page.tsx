@@ -1,14 +1,15 @@
 "use client";
 import { GravityStarsBackground } from "@/components/animate-ui/components/backgrounds/gravity-stars";
-import { StarsBackground } from "@/components/animate-ui/components/backgrounds/stars";
+import { SUGGESTIONS } from "@/lib/data";
 import { BlueTitle, GrayTitle } from "@/components/reusable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FEATURES, PLACEHOLDERS, STEPS } from "@/lib/data";
-import { useAuth } from "@clerk/nextjs";
+import { SignInButton, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
@@ -17,6 +18,23 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    if (isFocused || prompt) return;
+    const t = setInterval(() => {
+      setPlaceholderIndex((i) => (i + 1) % PLACEHOLDERS.length);
+    }, 3000);
+
+    return () => clearInterval(t);
+  }, [isFocused, prompt]);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 200) + "px";
+  }, [prompt]);
+
   const handleSubmit = () => {
     if (!prompt.trim() || !isSignedIn) return;
     router.push(`/workspace?prompt=${encodeURIComponent(prompt.trim())}`);
@@ -27,6 +45,11 @@ export default function Home() {
       e.preventDefault();
       handleSubmit();
     }
+  };
+
+  const handleSuggestions = (s: string) => {
+    setPrompt(s);
+    textareaRef.current?.focus();
   };
 
   return (
@@ -74,9 +97,46 @@ export default function Home() {
               rows={1}
               className="w-full resize-none bg-transparent px-5 pb-4 pt-5 text-sm placeholder:text-white/20 focus:outline-none sm:text-base"
               style={{ minHeight: 56, maxHeight: 200 }}
+              placeholder={PLACEHOLDERS[placeholderIndex]}
             />
+            <div className="flex items-center justify-between border-t border-white/6 px-4 py-2.5">
+              <span className="text-xs text-white/20">
+                Press ↵ to generate. shift+↵ for new line
+              </span>
+              {isSignedIn ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!prompt.trim()}
+                  className="h-8 rounded-full px-5 semibold"
+                  variant={prompt.trim() ? "default" : "secondary"}
+                >
+                  Generate
+                </Button>
+              ) : (
+                <SignInButton mode="modal">
+                  <Button className="h-8 rounded-full bg-white px-5 font-semibold ">
+                    Generate
+                    <ArrowRight className="h-3.5 w-3.5"></ArrowRight>
+                  </Button>
+                </SignInButton>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleSuggestions(s)}
+                className="rounded-full border border-white/8 bg-white/4 px-3 py-1.5 text-xs text-white/40 hover:border-white/15 hover:bg-white/8 hover:text-white/70"
+              >
+                {s}
+              </button>
+            ))}
           </div>
         </div>
+        <p className="mt-10 text-xs text-white/20">
+          No credit card required. 10 free generations on sign up
+        </p>
       </section>
     </main>
   );
