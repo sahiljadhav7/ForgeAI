@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Zap } from "lucide-react";
 import { SectionLabel, SectionHeading } from "@/components/reusable";
+import { ChevronRight } from "lucide-react";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
@@ -327,7 +328,38 @@ export default function Home() {
         <div className="mx-auto max-w-3xl"></div>
       </section>
 
-      <section className="relative mx-auto mb-32 max-wl-5xl overflow-hidden rounded-2xl border border-white/8 px-10 py-24 text-center"></section>
+      <section className="relative mx-auto mb-32 max-wl-5xl overflow-hidden rounded-2xl border border-white/8 px-10 py-24 text-center">
+        <GravityStarsBackground
+          className="absolute inset-0 h-full w-full"
+          style={{
+            maskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
+            maskSize: "100% 200%",
+          }}
+        />
+        <SectionHeading gray="Start building," blue="for free." />
+
+        <p className="mb-8 text-sm leading-relaxed text-white/40">
+          Get 10 free generations on sign up. No credit card required.
+          <br />
+          upgrade when&apos;re ready.
+        </p>
+        <SignInButton mode="modal">
+          <Button
+            size="lg"
+            className={"relative h-11 rounded-full bg-white px-8"}
+          >
+            Get started free
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </SignInButton>
+      </section>
+
+      <footer className="relative z-10 border-t border-white/7 py-12 mx-auto px-6 flex flex-wrap items-center justify-center text-stone-400">
+        Made by jadhavsahilcodes@dotcom
+      </footer>
     </main>
   );
 }
