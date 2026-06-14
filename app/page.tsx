@@ -313,6 +313,21 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      <section className="px-4 pb-32">
+        <div className="mx-auto mb-14 max-w-5xl text-center">
+          <SectionLabel>Simple pricing</SectionLabel>
+          <SectionHeading gray="Start free" blue="scale when ready." />
+
+          <p className="mx-auto mt-4 max-w-sm text-sm text-white/35">
+            No credit card required. Upgrade or downgrade anytime.
+          </p>
+        </div>
+
+        <div className="mx-auto max-w-3xl"></div>
+      </section>
+
+      <section className="relative mx-auto mb-32 max-wl-5xl overflow-hidden rounded-2xl border border-white/8 px-10 py-24 text-center"></section>
     </main>
   );
 }
