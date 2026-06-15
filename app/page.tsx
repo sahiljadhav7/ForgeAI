@@ -274,9 +274,6 @@ export default function Home() {
                   </span>
                 </div>
               </div>
-              {i < STEPS.length - 1 && (
-                <div className="mt-2 h-full w-px bg-white/6" />
-              )}
 
               <div className="pb-10 pt-1.5">
                 <p className="mb-1.5 text-sm font-semibold sm:text-base">
@@ -328,7 +325,7 @@ export default function Home() {
         <div className="mx-auto max-w-3xl"></div>
       </section>
 
-      <section className="relative mx-auto mb-32 max-wl-5xl overflow-hidden rounded-2xl border border-white/8 px-10 py-24 text-center">
+      <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-white/8 px-6 sm:px-10 py-24 text-center">
         <GravityStarsBackground
           className="absolute inset-0 h-full w-full"
           style={{
@@ -336,7 +333,6 @@ export default function Home() {
               "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
             WebkitMaskImage:
               "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)",
-            maskSize: "100% 200%",
           }}
         />
         <SectionHeading gray="Start building," blue="for free." />
@@ -344,7 +340,7 @@ export default function Home() {
         <p className="mb-8 text-sm leading-relaxed text-white/40">
           Get 10 free generations on sign up. No credit card required.
           <br />
-          upgrade when&apos;re ready.
+          upgrade when you&apos;re ready.
         </p>
         <SignInButton mode="modal">
           <Button
