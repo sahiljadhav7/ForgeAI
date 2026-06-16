@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FEATURES, PLACEHOLDERS, STEPS } from "@/lib/data";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
@@ -322,7 +322,19 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="mx-auto max-w-3xl"></div>
+        <div className="mx-auto max-w-5xl">
+          <PricingTable
+            checkoutProps={{
+              appearance: {
+                elements: {
+                  drawerRoot: {
+                    zIndex: 2000,
+                  },
+                },
+              },
+            }}
+          />
+        </div>
       </section>
 
       <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-white/8 px-6 sm:px-10 py-24 text-center">
