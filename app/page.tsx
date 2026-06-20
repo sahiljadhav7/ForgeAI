@@ -40,7 +40,7 @@ export default function Home() {
 
   const handleSubmit = () => {
     if (!prompt.trim() || !isSignedIn) return;
-    router.push(`/main/workspace?prompt=${encodeURIComponent(prompt.trim())}`);
+    router.push(`/workspace?prompt=${encodeURIComponent(prompt.trim())}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
