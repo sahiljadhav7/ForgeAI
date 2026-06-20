@@ -9,6 +9,7 @@ import {
   SandpackPreview,
   SandpackFileExplorer,
   useSandpack,
+  SandpackLayout,
 } from "@codesandbox/sandpack-react";
 
 import { dracula } from "@codesandbox/sandpack-themes";
@@ -115,10 +116,48 @@ function SandpackInner({
           </TabsTrigger>
         </TabsList>
       </div>
-      <TabsContent value="account">
-        Make changes to your account here.
-      </TabsContent>
-      <TabsContent value="password">Change your password here.</TabsContent>
+
+      <div className="relative flex-1 overflow-hidden">
+        <SandpackLayout
+          style={{
+            height: "100vh",
+            border: "none",
+            borderRadius: 0,
+            background: "transparent",
+          }}
+        >
+          <TabsContent
+            value="preview"
+            keepMounted
+            className={"mt-0 h-full w-full"}
+          >
+            <SandpackPreview
+              style={{ height: "89%" }}
+              showOpenInCodeSandbox={false}
+            />
+          </TabsContent>
+          <TabsContent
+            value="code"
+            keepMounted
+            className={"mt-0 flex h-full w-full"}
+          >
+            <SandpackFileExplorer
+              style={{
+                height: "90%",
+                width: "180px",
+                borderRight: "0.5px solid rgba(255,255,255,0.08)",
+              }}
+            />
+            <SandpackCodeEditor
+              style={{ height: "90%", flex: 1 }}
+              showTabs
+              showLineNumbers
+              closableTabs
+              readOnly
+            />
+          </TabsContent>
+        </SandpackLayout>
+      </div>
     </Tabs>
   );
 }
@@ -140,7 +179,7 @@ export function CodePanel({
   const filePathKey = Object.keys(files).sort().join("|");
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col overflow-hidden">
       <SandpackProvider
         key={filePathKey}
         template="react"
