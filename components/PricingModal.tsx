@@ -12,14 +12,14 @@ import { PricingTable } from "@clerk/nextjs";
 
 interface PricingModalProps {
   children: React.ReactNode;
-  reason?: "credits " | "upgrade";
+  reason?: "credits" | "upgrade";
 }
 
 const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
   const title =
-    reason == "credits " ? "You're out of credits" : "upgrade your plan";
+    reason == "credits" ? "You're out of credits" : "upgrade your plan";
   const description =
-    reason === "credits "
+    reason === "credits"
       ? "You've used all your credits. Upgrade to keep building."
       : "choose a plan that fits how much you build.";
   return (
