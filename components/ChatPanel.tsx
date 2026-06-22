@@ -6,7 +6,8 @@ import { Message, StatusStep } from "@/types/workspace";
 import { BlueTitle } from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
-import { Check, Divide, Loader2 } from "lucide-react";
+import { ArrowUp, Check, Divide, Loader2, Paperclip } from "lucide-react";
+import { Button } from "@base-ui/react";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -49,6 +50,13 @@ const ChatPanel = ({
     { label: "Validating packages...", status: "running" },
   ];
 
+  const handleSubmit = async () => {
+    const trimmed = input.trim();
+    if (!trimmed || isGenerating || isImproving || noCredits) return;
+    setInput("");
+    await onGenerate(trimmed);
+  };
+
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -62,7 +70,19 @@ const ChatPanel = ({
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isGenerating, isImproving]);
 
-  const handleKeyDown = () => {};
+  useEffect(() => {
+    if (!initialPrompt || hasAutoSubmittedRef.current || messages.length > 0)
+      return;
+    hasAutoSubmittedRef.current = true;
+    onGenerate(initialPrompt);
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   return (
     <div className="flex w-[320px] shrink-0 flex-col bg-[#0d0d0d]">
@@ -195,7 +215,36 @@ const ChatPanel = ({
             className="w-full resize-none bg-transparent px-3.5 pb-2 pt-3 text-[13px] text-white/80 placeholder:text-white/20 focus:outline-none"
             style={{ maxHeight: 160 }}
           />
+
+          <div className="flex items-center justify-between px-2 pb-2">
+            <Button
+              disabled
+              className={"h-7 w-7 rounded-lg text-white/25 opacity-40" as any}
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+            </Button>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={cn(
+                "h-7 w-7 rounded-lg transition-all flex items-center justify-center",
+                canSubmit
+                  ? "bg-white text-black hover:bg-white/90 active:scale-95"
+                  : "bg-white/8 text-white/20 shadow-none",
+              )}
+            >
+              {isGenerating || isImproving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ArrowUp className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
         </div>
+        <p className="mt-1.5 text-center text-[10px] text-white/15">
+          Enter to send. shift + Enter for new line.
+        </p>
       </div>
     </div>
   );
