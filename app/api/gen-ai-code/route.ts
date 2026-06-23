@@ -10,6 +10,62 @@ function trimHistory(messages: Message[]): Message[] {
   return [messages[0], ...messages.slice(-8)];
 }
 
+const SYSTEM_PROMPT = `You are an expert React developer. Your job is to generate complete, working React applications based on user prompts.
+
+RULES:
+1. Always respond with a valid JSON object — no markdown fences, no extra text.
+2. The JSON must match this exact shape:
+{
+  "assistantMessage": "<brief explanation of what you built/changed>",
+  "title": "<short 2-4 word title for the app, e.g. 'Todo List App'>",
+  "files": {
+    "/App.js": { "code": "<full file content>" },
+    "/components/SomeComponent.js": { "code": "<full file content>" }
+  },
+  "dependencies": {
+    "some-package": "latest"
+  }
+}
+3. Use React (functional components + hooks). Do NOT use TypeScript in generated files.
+4. Use Tailwind CSS for all styling. Do not use CSS modules or inline styles unless absolutely necessary.
+5. The entry point must always be /App.js and must export a default component.
+6. All imports must reference files you include in "files" or packages in "dependencies".
+7. Do not include react, react-dom, or tailwindcss in "dependencies" — they are always available.
+8. When modifying existing code, include ALL files (both changed and unchanged) in "files".
+9. Keep code clean, readable, and production-quality.
+10. If the user attaches an image, use it as a design reference and match the layout/style as closely as possible.`;
+
+function extractThoughtLabel(text: string): string | null {
+  const boldMatch = text.match(/\*\*([^*]{4,60})\*\*/);
+  if (boldMatch) return boldMatch[1].trim();
+
+  const sentence = text.split(/[.\n]/)[0].trim();
+  if (sentence.length >= 8 && sentence.length <= 80) return sentence;
+
+  return null;
+}
+
+function sseEvent(type: string, payload: unknown): string {
+  return `data: ${JSON.stringify({ type, ...(payload as object) })}\n\n`;
+}
+
+async function validateDependencies(
+  deps: Record<string, string>,
+): Promise<Record<string, string>> {
+  const valid: Record<string, string> = {};
+  await Promise.all(
+    Object.entries(deps).map(async ([pkg, version]) => {
+      try {
+        const res = await fetch(`https://registry.npmjs.org/${pkg}/latest`, {
+          signal: AbortSignal.timeout(1500),
+        });
+        if (res.ok) valid[pkg] = version;
+      } catch {}
+    }),
+  );
+  return valid;
+}
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 function buildContents(messages: Message[], fileData: FileData | null) {
@@ -47,7 +103,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const { workspaceId, userId, messages, fileData } = body as {
-    workpaceId: string | null;
+    workspaceId: string | null;
     userId: string;
     messages: Message[];
     fileData: FileData | null;
@@ -77,8 +133,161 @@ export async function POST(request: NextRequest) {
       try {
         const contents = buildContents(messages, fileData);
 
-        const geminiStream = await ai.models.generateContentStream({});
-      } catch (error) {}
+        const geminiStream = await ai.models.generateContentStream({
+          model: "gemini-3.5-flash",
+          contents,
+          config: {
+            systemInstruction: SYSTEM_PROMPT,
+            temperature: 0.7,
+            responseMimeType: "application/json",
+            thinkingConfig: {
+              // Gemini emits thought chunks before the actual output.
+              //we extract short labels from them and emit as status events.
+              //so the user sees "Designing layout","Adding interactivity"etc
+              includeThoughts: true,
+            },
+          },
+        });
+
+        let accumulated = "";
+        let lastEmitTime = 0;
+
+        for await (const chunk of geminiStream) {
+          const parts = chunk.candidates?.[0]?.content?.parts ?? [];
+
+          for (const part of parts) {
+            if (!part.text) continue;
+
+            if (part.thought) {
+              const now = Date.now();
+              if (now - lastEmitTime > 600) {
+                const label = extractThoughtLabel(part.text);
+                if (label) {
+                  enqueue(sseEvent("status", { message: label }));
+                  lastEmitTime = now;
+                } else {
+                  accumulated += part.text;
+                }
+              }
+            }
+          }
+        }
+
+        let parsed: {
+          assistantMessage: string;
+          title?: string;
+          files: Record<string, { code: string }>;
+          dependencies: Record<string, string>;
+        };
+
+        try {
+          parsed = JSON.parse(accumulated);
+        } catch (error) {
+          enqueue(
+            sseEvent("error", {
+              message: "AI returned invalid JSON. Please try again",
+            }),
+          );
+          controller.close();
+          return;
+        }
+
+        const {
+          assistantMessage,
+          title: aiTitle,
+          files,
+          dependencies,
+        } = parsed;
+
+        if (!files || typeof files !== "object") {
+          enqueue(
+            sseEvent("error", {
+              message: "AI response missing files. Please try again",
+            }),
+          );
+          controller.close();
+          return;
+        }
+
+        //validate npm packeages
+
+        enqueue(sseEvent("status", { message: "validating packages.." }));
+        const validatedDeps = await validateDependencies(dependencies ?? {});
+        const newFileData: FileData = {
+          files,
+          dependencies: validatedDeps,
+          title: aiTitle,
+        };
+
+        //Upsert workspace + deduct credict
+        enqueue(sseEvent("status", { messsage: "saving" }));
+
+        const lastUserMsg = messages[messages.length - 1];
+        const updatedMessages: Message[] = [
+          ...messages,
+          { role: "assistant", content: assistantMessage },
+        ];
+
+        const [workspace] = await db.$transaction([
+          workspaceId
+            ? db.workspace.update({
+                where: { id: workspaceId, userId },
+                data: {
+                  messages: updatedMessages as never,
+                  fileData: newFileData as never,
+                },
+              })
+            : db.workspace.create({
+                data: {
+                  userId,
+                  title: aiTitle ?? lastUserMsg.content.slice(0, 80),
+                  messages: updatedMessages as never,
+                  fileData: newFileData as never,
+                },
+              }),
+          db.user.update({
+            where: { id: userId },
+            data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
+          }),
+        ]);
+
+        const updateUser = await db.user.findUnique({
+          where: { id: userId },
+          select: { credits: true },
+        });
+
+        //final event
+
+        enqueue(
+          sseEvent("done", {
+            workspaceId: workspace.id,
+            assistantMessage,
+            fileData: newFileData,
+            creditsRemaining:
+              updateUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
+          }),
+        );
+      } catch (err) {
+        console.error("[gen-ai-code] stream error:", err);
+        enqueue(
+          sseEvent("erro", {
+            message: "something went wrong. Please try again",
+          }),
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event=stream",
+      "Cache-Control": "no-cache",
+      connection: "keep-alive",
     },
   });
 }
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
