@@ -66,6 +66,17 @@ async function validateDependencies(
   return valid;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientGeminiError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  return /503|UNAVAILABLE|high demand|temporar|timeout|deadline|not found|unsupported for generateContent|not supported/i.test(
+    error.message,
+  );
+}
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 function buildContents(messages: Message[], fileData: FileData | null) {
@@ -114,14 +125,14 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await db.user.findUnique({
-    where: { id: userId, clerkId },
+    where: { clerkId },
     select: { id: true, credits: true },
   });
 
   if (!user)
     return Response.json({ message: "user not found" }, { status: 404 });
   if (user.credits < CREDIT_COST_PER_GENERATION) {
-    return Response.json({ message: "Insufficent credits" }, { status: 402 });
+    return Response.json({ message: "Insufficient credits" }, { status: 402 });
   }
 
   const encoder = new TextEncoder();
@@ -132,22 +143,48 @@ export async function POST(request: NextRequest) {
 
       try {
         const contents = buildContents(messages, fileData);
+        const modelsToTry = [
+          process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+          "gemini-2.5-flash-lite",
+          "gemini-3.5-flash",
+        ].filter(Boolean);
 
-        const geminiStream = await ai.models.generateContentStream({
-          model: "gemini-3.5-flash",
-          contents,
-          config: {
-            systemInstruction: SYSTEM_PROMPT,
-            temperature: 0.7,
-            responseMimeType: "application/json",
-            thinkingConfig: {
-              // Gemini emits thought chunks before the actual output.
-              //we extract short labels from them and emit as status events.
-              //so the user sees "Designing layout","Adding interactivity"etc
-              includeThoughts: true,
-            },
-          },
-        });
+        let geminiStream;
+        let lastError: unknown;
+
+        for (const model of modelsToTry) {
+          try {
+            geminiStream = await ai.models.generateContentStream({
+              model,
+              contents,
+              config: {
+                systemInstruction: SYSTEM_PROMPT,
+                temperature: 0.7,
+                responseMimeType: "application/json",
+                thinkingConfig: {
+                  // Gemini emits thought chunks before the actual output.
+                  // we extract short labels from them and emit as status events.
+                  // so the user sees "Designing layout", "Adding interactivity", etc.
+                  includeThoughts: true,
+                },
+              },
+            });
+            break;
+          } catch (error) {
+            lastError = error;
+            if (!isTransientGeminiError(error)) break;
+            enqueue(
+              sseEvent("status", {
+                message: `Model ${model} unavailable, retrying with fallback...`,
+              }),
+            );
+            await sleep(1000);
+          }
+        }
+
+        if (!geminiStream) {
+          throw lastError ?? new Error("Unable to connect to Gemini");
+        }
 
         let accumulated = "";
         let lastEmitTime = 0;
@@ -165,10 +202,10 @@ export async function POST(request: NextRequest) {
                 if (label) {
                   enqueue(sseEvent("status", { message: label }));
                   lastEmitTime = now;
-                } else {
-                  accumulated += part.text;
                 }
               }
+            } else {
+              accumulated += part.text;
             }
           }
         }
@@ -182,7 +219,7 @@ export async function POST(request: NextRequest) {
 
         try {
           parsed = JSON.parse(accumulated);
-        } catch (error) {
+        } catch {
           enqueue(
             sseEvent("error", {
               message: "AI returned invalid JSON. Please try again",
@@ -209,7 +246,7 @@ export async function POST(request: NextRequest) {
           return;
         }
 
-        //validate npm packeages
+        // validate npm packages
 
         enqueue(sseEvent("status", { message: "validating packages.." }));
         const validatedDeps = await validateDependencies(dependencies ?? {});
@@ -219,8 +256,8 @@ export async function POST(request: NextRequest) {
           title: aiTitle,
         };
 
-        //Upsert workspace + deduct credict
-        enqueue(sseEvent("status", { messsage: "saving" }));
+        // Upsert workspace + deduct credit
+        enqueue(sseEvent("status", { message: "saving" }));
 
         const lastUserMsg = messages[messages.length - 1];
         const updatedMessages: Message[] = [
@@ -228,28 +265,55 @@ export async function POST(request: NextRequest) {
           { role: "assistant", content: assistantMessage },
         ];
 
-        const [workspace] = await db.$transaction([
-          workspaceId
-            ? db.workspace.update({
-                where: { id: workspaceId, userId },
-                data: {
-                  messages: updatedMessages as never,
-                  fileData: newFileData as never,
-                },
-              })
-            : db.workspace.create({
-                data: {
-                  userId,
-                  title: aiTitle ?? lastUserMsg.content.slice(0, 80),
-                  messages: updatedMessages as never,
-                  fileData: newFileData as never,
-                },
+        let workspace;
+
+        if (workspaceId) {
+          const existing = await db.workspace.findUnique({
+            where: { id: workspaceId },
+          });
+          if (!existing || existing.userId !== userId) {
+            enqueue(
+              sseEvent("error", {
+                message: "workspace not found or unauthorized",
               }),
-          db.user.update({
-            where: { id: userId },
-            data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
-          }),
-        ]);
+            );
+            controller.close();
+            return;
+          }
+
+          const result = await db.$transaction([
+            db.workspace.update({
+              where: { id: workspaceId },
+              data: {
+                messages: updatedMessages as never,
+                fileData: newFileData as never,
+              },
+            }),
+            db.user.update({
+              where: { id: userId },
+              data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
+            }),
+          ]);
+
+          workspace = result[0];
+        } else {
+          const result = await db.$transaction([
+            db.workspace.create({
+              data: {
+                userId,
+                title: aiTitle ?? lastUserMsg.content.slice(0, 80),
+                messages: updatedMessages as never,
+                fileData: newFileData as never,
+              },
+            }),
+            db.user.update({
+              where: { id: userId },
+              data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
+            }),
+          ]);
+
+          workspace = result[0];
+        }
 
         const updateUser = await db.user.findUnique({
           where: { id: userId },
@@ -267,11 +331,16 @@ export async function POST(request: NextRequest) {
               updateUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
           }),
         );
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("[gen-ai-code] stream error:", err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : "something went wrong. Please try again";
         enqueue(
-          sseEvent("erro", {
-            message: "something went wrong. Please try again",
+          sseEvent("error", {
+            // include the original error message in dev to aid debugging
+            message,
           }),
         );
       } finally {
@@ -282,7 +351,7 @@ export async function POST(request: NextRequest) {
 
   return new Response(stream, {
     headers: {
-      "Content-Type": "text/event=stream",
+      "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       connection: "keep-alive",
     },
