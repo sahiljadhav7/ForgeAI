@@ -70,9 +70,15 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function isTransientGeminiError(error: unknown) {
+function isTransientGeminiError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
-  return /503|UNAVAILABLE|high demand|temporar|timeout|deadline|not found|unsupported for generateContent|not supported/i.test(
+
+  // Check status code on the error object itself (SDK ApiError shape)
+  const err = error as Error & { status?: number; code?: number };
+  if (err.status === 503 || err.code === 503) return true;
+
+  // Also check the message string (which may contain raw JSON)
+  return /503|UNAVAILABLE|high demand|temporar|timeout|deadline/i.test(
     error.message,
   );
 }
@@ -146,44 +152,64 @@ export async function POST(request: NextRequest) {
         const modelsToTry = [
           process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
           "gemini-2.5-flash-lite",
-          "gemini-3.5-flash",
         ].filter(Boolean);
+
+        const MAX_RETRIES_PER_MODEL = 3;
+        const RETRY_DELAY_MS = 1500;
 
         let geminiStream;
         let lastError: unknown;
 
-        for (const model of modelsToTry) {
-          try {
-            geminiStream = await ai.models.generateContentStream({
-              model,
-              contents,
-              config: {
-                systemInstruction: SYSTEM_PROMPT,
-                temperature: 0.7,
-                responseMimeType: "application/json",
-                thinkingConfig: {
-                  // Gemini emits thought chunks before the actual output.
-                  // we extract short labels from them and emit as status events.
-                  // so the user sees "Designing layout", "Adding interactivity", etc.
-                  includeThoughts: true,
+        outer: for (const model of modelsToTry) {
+          for (let attempt = 1; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
+            try {
+              geminiStream = await ai.models.generateContentStream({
+                model,
+                contents,
+                config: {
+                  systemInstruction: SYSTEM_PROMPT,
+                  temperature: 0.7,
+                  responseMimeType: "application/json",
+                  thinkingConfig: {
+                    includeThoughts: true,
+                  },
                 },
-              },
-            });
-            break;
-          } catch (error) {
-            lastError = error;
-            if (!isTransientGeminiError(error)) break;
-            enqueue(
-              sseEvent("status", {
-                message: `Model ${model} unavailable, retrying with fallback...`,
-              }),
-            );
-            await sleep(1000);
+              });
+              break outer;
+            } catch (error) {
+              lastError = error;
+
+              if (!isTransientGeminiError(error)) {
+                enqueue(
+                  sseEvent("status", {
+                    message: `Model ${model} unavailable, trying fallback…`,
+                  }),
+                );
+                break;
+              }
+
+              if (attempt < MAX_RETRIES_PER_MODEL) {
+                enqueue(
+                  sseEvent("status", {
+                    message: `High demand, retrying (${attempt}/${MAX_RETRIES_PER_MODEL - 1})…`,
+                  }),
+                );
+                await sleep(RETRY_DELAY_MS * attempt);
+              } else {
+                enqueue(
+                  sseEvent("status", {
+                    message: `Model ${model} still unavailable, trying fallback…`,
+                  }),
+                );
+              }
+            }
           }
         }
 
         if (!geminiStream) {
-          throw lastError ?? new Error("Unable to connect to Gemini");
+          throw (
+            lastError ?? new Error("All models unavailable. Please try again.")
+          );
         }
 
         let accumulated = "";
@@ -257,69 +283,41 @@ export async function POST(request: NextRequest) {
         };
 
         // Upsert workspace + deduct credit
-        enqueue(sseEvent("status", { message: "saving" }));
+        enqueue(sseEvent("status", { message: "Saving…" }));
 
-        const lastUserMsg = messages[messages.length - 1];
+        const lastUserMessage = messages[messages.length - 1];
         const updatedMessages: Message[] = [
           ...messages,
           { role: "assistant", content: assistantMessage },
         ];
 
-        let workspace;
-
-        if (workspaceId) {
-          const existing = await db.workspace.findUnique({
-            where: { id: workspaceId },
-          });
-          if (!existing || existing.userId !== userId) {
-            enqueue(
-              sseEvent("error", {
-                message: "workspace not found or unauthorized",
+        const [workspace] = await db.$transaction([
+          workspaceId
+            ? db.workspace.update({
+                where: { id: workspaceId, userId },
+                data: {
+                  messages: updatedMessages as never,
+                  fileData: newFileData as never,
+                },
+              })
+            : db.workspace.create({
+                data: {
+                  userId,
+                  title: aiTitle ?? lastUserMessage.content.slice(0, 80),
+                  messages: updatedMessages as never,
+                  fileData: newFileData as never,
+                },
               }),
-            );
-            controller.close();
-            return;
-          }
+          db.user.update({
+            where: { id: userId },
+            data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
+          }),
+        ]);
 
-          const result = await db.$transaction([
-            db.workspace.update({
-              where: { id: workspaceId },
-              data: {
-                messages: updatedMessages as never,
-                fileData: newFileData as never,
-              },
-            }),
-            db.user.update({
-              where: { id: userId },
-              data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
-            }),
-          ]);
-
-          workspace = result[0];
-        } else {
-          const result = await db.$transaction([
-            db.workspace.create({
-              data: {
-                userId,
-                title: aiTitle ?? lastUserMsg.content.slice(0, 80),
-                messages: updatedMessages as never,
-                fileData: newFileData as never,
-              },
-            }),
-            db.user.update({
-              where: { id: userId },
-              data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
-            }),
-          ]);
-
-          workspace = result[0];
-        }
-
-        const updateUser = await db.user.findUnique({
+        const updatedUser = await db.user.findUnique({
           where: { id: userId },
           select: { credits: true },
         });
-
         //final event
 
         enqueue(
@@ -328,7 +326,7 @@ export async function POST(request: NextRequest) {
             assistantMessage,
             fileData: newFileData,
             creditsRemaining:
-              updateUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
+              updatedUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
           }),
         );
       } catch (err: unknown) {
