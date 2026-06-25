@@ -4,6 +4,8 @@ import { FileData, Message } from "@/types/workspace";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { detectPromptInjection } from "@arcjet/next";
+import { aj } from "@/lib/arcjet";
 
 function trimHistory(messages: Message[]): Message[] {
   if (messages.length <= 10) return messages;
@@ -89,6 +91,8 @@ function buildContents(messages: Message[], fileData: FileData | null) {
   const trimmed = trimHistory(messages);
 
   return trimmed.map((msg, idx) => {
+    const role = msg.role === "assistant" ? "model" : "user";
+
     if (msg.role === "user") {
       const parts: object[] = [];
       let text = msg.content;
@@ -105,10 +109,10 @@ function buildContents(messages: Message[], fileData: FileData | null) {
       }
 
       parts.push({ text });
-      return { role: msg.role, parts };
+      return { role, parts };
     }
 
-    return { role: msg.role, parts: [{ text: msg.content }] };
+    return { role, parts: [{ text: msg.content }] };
   });
 }
 
@@ -128,6 +132,29 @@ export async function POST(request: NextRequest) {
 
   if (!messages?.length) {
     return Response.json({ message: "No message provided" }, { status: 400 });
+  }
+  // Arcjet: rate Limit, prompt injection, sensiitiveinfo
+
+  const arcjetReq = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(body),
+  });
+
+  const lastUserMessage =
+    [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+  const decision = await aj.protect(arcjetReq, {
+    requested: 1,
+    userId: clerkId,
+    detectPromptInjectionMessage: lastUserMessage,
+  });
+
+  if (decision.isDenied()) {
+    return Response.json(
+      { message: decision.reason?.type ?? "Request blocked" },
+      { status: 429 },
+    );
   }
 
   const user = await db.user.findUnique({

@@ -22,7 +22,7 @@ export async function getWorkspaceById(
 ): Promise<WorkspaceData> {
   const workspace = await db.workspace.findUnique({
     where: { id: workspaceId, userId },
-    select: { id: true, title: true, message: true, fileData: true },
+    select: { id: true, title: true, messages: true, fileData: true },
   });
   if (!workspace) redirect("/");
   return workspace;

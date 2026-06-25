@@ -43,7 +43,7 @@ const WorkspaceClient = ({
 }: WorkspaceClientProps) => {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(
-    parseMessages(workspace?.message),
+    parseMessages(workspace?.messages),
   );
   const [credits, setCredits] = useState(userCredits);
 

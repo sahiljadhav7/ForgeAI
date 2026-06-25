@@ -20,7 +20,7 @@ export interface StatusStep {
 export interface WorkspaceData {
   id: string;
   title: string | null;
-  message: unknown;
+  messages: unknown;
   fileData: unknown;
 }
 
