@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI App Builder
 
-## Getting Started
+AI App Builder is a modern web application that transforms a natural-language prompt into a working app experience. Users can sign in, describe the product they want to build, and iterate on the generated workspace through a chat-based interface with live code output.
 
-First, run the development server:
+## What it does
+
+- Turns simple prompts into app concepts and generated code
+- Provides a dedicated workspace for chat-driven refinement
+- Offers a polished preview and code view for rapid iteration
+- Stores user workspaces and generation history with Prisma
+- Includes authentication, credits, and protection layers for production-ready use
+
+## Tech stack
+
+- Next.js 16 with React 19 and TypeScript
+- Tailwind CSS and shadcn/ui components
+- Prisma with PostgreSQL
+- Clerk for authentication
+- Google Gemini API for AI generation
+- Arcjet for request protection and abuse prevention
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+- PostgreSQL database
+
+### Installation
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create a local environment file:
+
+```bash
+# .env.local
+DATABASE_URL=postgresql://user:password@localhost:5432/ai_app_builder
+GEMINI_API_KEY=your_gemini_api_key
+ARCJET_KEY=your_arcjet_key
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+3. Generate Prisma client and sync the database:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- app/ - application routes, pages, and API handlers
+- components/ - reusable UI and workspace components
+- actions/ - server-side workspace actions
+- lib/ - shared utilities, auth, and AI integrations
+- prisma/ - schema and migrations
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app is designed for fast prototyping and AI-assisted product creation, with a clean workspace experience centered around prompt-driven generation and iteration.
