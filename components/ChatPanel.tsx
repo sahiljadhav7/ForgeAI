@@ -6,7 +6,14 @@ import { Message, StatusStep } from "@/types/workspace";
 import { BlueTitle } from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
-import { ArrowUp, Check, Divide, Loader2, Paperclip } from "lucide-react";
+import {
+  ArrowUp,
+  Check,
+  Divide,
+  Loader2,
+  Paperclip,
+  Square,
+} from "lucide-react";
 import { Button } from "@base-ui/react";
 
 interface ChatPanelProps {
@@ -20,6 +27,7 @@ interface ChatPanelProps {
   userId: string;
   workspaceId: string | null;
   appTitle: string | null;
+  onStop: () => void;
 }
 
 const ChatPanel = ({
@@ -32,6 +40,7 @@ const ChatPanel = ({
   onGenerate,
   userId,
   workspaceId,
+  onStop,
   appTitle,
 }: ChatPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -219,31 +228,42 @@ const ChatPanel = ({
           <div className="flex items-center justify-between px-2 pb-2">
             <Button
               disabled
-              className={"h-7 w-7 rounded-lg text-white/25 opacity-40" as any}
+              className="h-7 w-7 rounded-lg text-white/25 opacity-40"
             >
               <Paperclip className="h-3.5 w-3.5" />
             </Button>
 
-            <Button
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className={cn(
-                "h-7 w-7 rounded-lg transition-all flex items-center justify-center",
-                canSubmit
-                  ? "bg-white text-black hover:bg-white/90 active:scale-95"
-                  : "bg-white/8 text-white/20 shadow-none",
-              )}
-            >
-              {isGenerating || isImproving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ArrowUp className="h-3.5 w-3.5" />
-              )}
-            </Button>
+            {isGenerating || isImproving ? (
+              <Button
+                onClick={onStop}
+                className="flex items-center justify-center h-7 w-7 rounded-lg bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white active-scale"
+              >
+                <Square className="h-3 w-3 fill-current" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className={cn(
+                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
+                  canSubmit
+                    ? "bg-white text-black hover:bg-white/90 active:scale-95"
+                    : "bg-white/8 text-white/20 shadow-none",
+                )}
+              >
+                {isGenerating || isImproving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ArrowUp className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
         <p className="mt-1.5 text-center text-[10px] text-white/15">
-          Enter to send. shift + Enter for new line.
+          {isGenerating || isImproving
+            ? "click ⬜ to stop generation"
+            : "⏎ to send. shift + ⏎ for new line"}
         </p>
       </div>
     </div>
