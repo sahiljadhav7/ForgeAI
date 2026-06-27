@@ -6,15 +6,19 @@ import { Message, StatusStep } from "@/types/workspace";
 import { BlueTitle } from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 import {
   ArrowUp,
   Check,
   Divide,
   Loader2,
   Paperclip,
+  Sparkle,
+  Sparkles,
   Square,
 } from "lucide-react";
 import { Button } from "@base-ui/react";
+import { useUser } from "@clerk/nextjs";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -45,6 +49,8 @@ const ChatPanel = ({
 }: ChatPanelProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { user } = useUser();
 
   const [input, setInput] = useState("");
 
@@ -130,12 +136,31 @@ const ChatPanel = ({
               {msg.role === "user" ? (
                 <div className="flex items-start justify-end gap-2">
                   <div className="max-w-[85%] space-y-1.5">
+                    {msg.imageUrl && (
+                      <img
+                        src={msg.imageUrl}
+                        alt="uploaded"
+                        className="max-h-40 w-full rounded-lg object-cover"
+                      />
+                    )}
+
                     <div className="rounded-2xl rounded-br-sm bg-white/10 px-3.5 py-2.5">
                       <p className="text-[13px] leading-relaxed text-white/80 wrap-break-word">
                         {msg.content}
                       </p>
                     </div>
                   </div>
+                  {user?.imageUrl ? (
+                    <img
+                      src={user.imageUrl}
+                      alt={user.fullName ?? "You"}
+                      className="mt-0.5 h-6 w-6 shrink-0 rounded-full"
+                    />
+                  ) : (
+                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-white/50">
+                      {user?.firstName?.[0] ?? "U"}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-start gap-2">
@@ -146,10 +171,8 @@ const ChatPanel = ({
                     height={24}
                     className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
                   />
-                  <div className="min-w-0 rounded-2xl rounded-tl-sm bg-white.5 px-3.5 py-2.5">
-                    <p className="text-[13px] leading-relaxed text-white/70 wrap-break-word">
-                      {msg.content}
-                    </p>
+                  <div className="prose prose-sm prose-invert max-w-none text-[13px] leading-relaxed text-white/70 wrap-break-word [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-blue-300/80 [&_code]:text-xs [&_li]:my-0.5 [&_p]:my-1 [&_ul]:my-1">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 </div>
               )}
@@ -195,6 +218,19 @@ const ChatPanel = ({
           )}
         </div>
       </div>
+
+      {noCredits && (
+        <div className="mx-3 mb-2 rounded-xl border border-red-500/15 bg-red-950/40 px-4 py-3">
+          <p className="mb-2 text-[12px] font-medium text-red-400/80">
+            You&apos;ve used all your credits
+          </p>
+          <PricingModal reason="credits">
+            <span className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 text-xs text-black active:scale-95">
+              <Sparkles className="h-3 w-3">Upgrade Plan</Sparkles>
+            </span>
+          </PricingModal>
+        </div>
+      )}
 
       <div className="border-t border-white/6 pt-3">
         <div
