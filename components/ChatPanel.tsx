@@ -7,6 +7,7 @@ import { BlueTitle } from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+
 import {
   ArrowUp,
   Check,
@@ -16,9 +17,12 @@ import {
   Sparkle,
   Sparkles,
   Square,
+  X,
 } from "lucide-react";
-import { Button } from "@base-ui/react";
+import { createClient } from "@supabase/supabase-js";
+import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -33,6 +37,17 @@ interface ChatPanelProps {
   appTitle: string | null;
   onStop: () => void;
 }
+
+const getSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
+};
 
 const ChatPanel = ({
   messages,
@@ -53,6 +68,9 @@ const ChatPanel = ({
   const { user } = useUser();
 
   const [input, setInput] = useState("");
+  const [peindingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const hasAutoSubmittedRef = useRef(false);
   const noCredits = credits <= 0;
@@ -69,7 +87,9 @@ const ChatPanel = ({
     const trimmed = input.trim();
     if (!trimmed || isGenerating || isImproving || noCredits) return;
     setInput("");
-    await onGenerate(trimmed);
+    setPendingImageUrl(null);
+
+    await onGenerate(trimmed, peindingImageUrl ?? undefined);
   };
 
   useEffect(() => {
@@ -96,6 +116,40 @@ const ChatPanel = ({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    setIsUploading(true);
+
+    try {
+      const ext = file.name.split(".").pop();
+
+      const supabase = getSupabaseClient();
+      if (!supabase) {
+        throw new Error(
+          "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env file and restart the dev server.",
+        );
+      }
+
+      const path = `${userId}/${workspaceId ?? "new"}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("workspace-images")
+        .upload(path, file, { upsert: true });
+
+      if (error) throw error;
+      const { data } = supabase.storage
+        .from("workspace-images")
+        .getPublicUrl(path);
+      setPendingImageUrl(data.publicUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message);
+    } finally {
+      setIsUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -233,6 +287,22 @@ const ChatPanel = ({
       )}
 
       <div className="border-t border-white/6 pt-3">
+        {peindingImageUrl && (
+          <div className="relative mb-2 w-fit">
+            <img
+              src={peindingImageUrl}
+              alt="pending"
+              className="h-16 w-16 rounded-lg object-cover"
+            />
+            <button
+              onClick={() => setPendingImageUrl(null)}
+              className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-white/60 hover:text-white"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </div>
+        )}
+
         <div
           className={cn(
             "rounded-xl border bg-white/4 transition-colors",
@@ -263,11 +333,29 @@ const ChatPanel = ({
 
           <div className="flex items-center justify-between px-2 pb-2">
             <Button
-              disabled
-              className="h-7 w-7 rounded-lg text-white/25 opacity-40"
+              variant="ghost"
+              size="icon"
+              onClick={() => fileRef.current?.click()}
+              disabled={isGenerating || isImproving || isUploading || noCredits}
+              className="h-7 w-7 rounded-lg text-white/25 
+              hover:bg-white/6
+              hover:text-white/50
+              disabled:opacity-40"
             >
-              <Paperclip className="h-3.5 w-3.5" />
+              {isUploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Paperclip className="h-3.5 w-3.5" />
+              )}
             </Button>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
 
             {isGenerating || isImproving ? (
               <Button

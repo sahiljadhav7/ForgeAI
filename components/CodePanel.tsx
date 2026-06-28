@@ -13,7 +13,8 @@ import {
 } from "@codesandbox/sandpack-react";
 
 import { dracula } from "@codesandbox/sandpack-themes";
-import { Code2, Eye } from "lucide-react";
+import { Code2, Divide, Eye } from "lucide-react";
+import { RingLoader } from "react-spinners";
 
 const PLACEHOLDER_FILES = {
   "/App.js": {
@@ -66,6 +67,7 @@ interface CodepanelProps {
   isGenerating: boolean;
   statusLog: StatusStep[];
   onFilePatch: (patches: FileData) => void;
+  isImproving: boolean;
 }
 
 function SandpackInner({
@@ -73,11 +75,15 @@ function SandpackInner({
   isGenerating,
   activeTab,
   setActiveTab,
+  isImproving,
+  statusLog,
 }: {
   fileData: FileData | null;
   isGenerating: boolean;
   activeTab: ActiveTab;
   setActiveTab: (t: ActiveTab) => void;
+  isImproving: boolean;
+  statusLog: StatusStep[];
 }) {
   const { sandpack, listen } = useSandpack();
 
@@ -93,6 +99,10 @@ function SandpackInner({
     }
     prevFilesRef.current = fileData.files;
   }, [fileData?.files]);
+
+  useEffect(() => {
+    if (fileData) setActiveTab("preview");
+  }, [fileData]);
 
   return (
     <Tabs
@@ -118,6 +128,22 @@ function SandpackInner({
       </div>
 
       <div className="relative flex-1 overflow-hidden">
+        {(isGenerating || isImproving) && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-[#0a0a0a]/85b backdrop-blur-sm">
+            <RingLoader color="#60a5fa" size={64} speedMultiplier={0.8} />
+            <div className="flex flex-col items-center gap-1.5">
+              <p className="text-sm font-medium text-white/60">
+                {isImproving
+                  ? "Improving with AI"
+                  : (statusLog[statusLog.length - 1]?.label ?? "Generating..")}
+              </p>
+              <p className="text-xs text-white/20">
+                This usually takes 10-20 seconds
+              </p>
+            </div>
+          </div>
+        )}
+
         <SandpackLayout
           style={{
             height: "100vh",
@@ -167,6 +193,7 @@ export function CodePanel({
   isGenerating,
   statusLog,
   onFilePatch: _onFilePatch,
+  isImproving,
 }: CodepanelProps) {
   const [activeTab, setActiveTab] = useState<ActiveTab>("preview");
 
@@ -194,6 +221,8 @@ export function CodePanel({
       >
         <SandpackInner
           fileData={fileData}
+          statusLog={statusLog}
+          isImproving={isImproving}
           isGenerating={isGenerating}
           activeTab={activeTab}
           setActiveTab={setActiveTab}

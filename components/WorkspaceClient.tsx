@@ -39,7 +39,7 @@ const WorkspaceClient = ({
   userCredits,
   workspace,
   userId,
-  userPlan,
+  // userPlan,
 }: WorkspaceClientProps) => {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(
@@ -52,6 +52,7 @@ const WorkspaceClient = ({
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusLog, setStatusLog] = useState<StatusStep[]>([]);
+  const [isImproving, setIsImproving] = useState(false);
   const messagesRef = useRef<Message[]>(messages);
   useEffect(() => {
     messagesRef.current = messages;
@@ -220,6 +221,7 @@ const WorkspaceClient = ({
         isGenerating={isGenerating}
         statusLog={statusLog}
         onFilePatch={handleFilePatch}
+        isImproving={isImproving}
       />
     </div>
   );
