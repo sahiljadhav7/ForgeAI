@@ -13,8 +13,9 @@ import {
 } from "@codesandbox/sandpack-react";
 
 import { dracula } from "@codesandbox/sandpack-themes";
-import { Code2, Divide, Eye } from "lucide-react";
+import { AlertTriangle, Code2, Divide, Eye } from "lucide-react";
 import { RingLoader } from "react-spinners";
+import { Button } from "@/components/ui/button";
 
 const PLACEHOLDER_FILES = {
   "/App.js": {
@@ -86,6 +87,8 @@ function SandpackInner({
   statusLog: StatusStep[];
 }) {
   const { sandpack, listen } = useSandpack();
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
   const prevFilesRef = useRef<Record<string, { code: string }>>({});
   useEffect(() => {
@@ -183,6 +186,24 @@ function SandpackInner({
             />
           </TabsContent>
         </SandpackLayout>
+
+        <div className="absolute inset-x-0 -bottom-3 z-20 border-t border-red-500/20 bg-red/500/20 bg-red-950/99 p-4 pb-6">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-red400/80">preview</p>
+              <p className="break-all text-[11px] text-red-300/50">
+                {previewError}
+              </p>
+            </div>
+
+            <Button
+              onclick={() => onFixError(previewError)}
+              variant="destructive"
+              size="sm"
+            ></Button>
+          </div>
+        </div>
       </div>
     </Tabs>
   );
