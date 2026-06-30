@@ -2,7 +2,14 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Zap } from "lucide-react";
-import { Show, SignUpButton, UserButton, SignInButton } from "@clerk/nextjs";
+import {
+  ClerkLoaded,
+  ClerkLoading,
+  Show,
+  SignUpButton,
+  UserButton,
+  SignInButton,
+} from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
 import { checkUser } from "@/lib/checkUser";
@@ -27,44 +34,50 @@ const Header = async () => {
         </Link>
 
         <div className="flex items-center gap-4">
-          <Show when="signed-in">
-            <Link
-              href={"/projects"}
-              className="text-13px font-medium text-white/40 transition-colors hover:text-whtite/80"
-            >
-              Projects
-            </Link>
+          <ClerkLoading>
+            <div className="h-8 w-20 animate-pulse rounded-full bg-white/10" />
+          </ClerkLoading>
 
-            {user && (
-              <PricingModal>
-                <span className="inline-flex h-8 items-center gap=1.5 rounded-full border border-white/10 bg-white/5 px-3 text-white/70 text-13px font-medium">
-                  <Zap className="h-3 w-3 fill-white/70" /> {user.credits}/{" "}
-                  {PLANS[user?.plan as Plan].credits}credits
-                </span>
-              </PricingModal>
-            )}
-
-            <UserButton />
-          </Show>
-
-          <Show when="signed-out">
-            <SignInButton mode="modal">
-              <Button variant="ghost" size="sm" className={"*:text-white/40"}>
-                Sign In
-              </Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button
-                type="button"
-                className={
-                  "h-8 rounded-full font-semibold active:scale-95 px-4 pt-0.5"
-                }
+          <ClerkLoaded>
+            <Show when="signed-in">
+              <Link
+                href={"/projects"}
+                className="text-13px font-medium text-white/40 transition-colors hover:text-whtite/80"
               >
-                Get started
-                <ArrowRight className=" h-3 w-3 opacity-60" />
-              </Button>
-            </SignUpButton>
-          </Show>
+                Projects
+              </Link>
+
+              {user && (
+                <PricingModal>
+                  <span className="inline-flex h-8 items-center gap=1.5 rounded-full border border-white/10 bg-white/5 px-3 text-white/70 text-13px font-medium">
+                    <Zap className="h-3 w-3 fill-white/70" /> {user.credits}/{" "}
+                    {PLANS[user?.plan as Plan].credits}credits
+                  </span>
+                </PricingModal>
+              )}
+
+              <UserButton />
+            </Show>
+
+            <Show when="signed-out">
+              <SignInButton mode="modal">
+                <Button variant="ghost" size="sm" className={"*:text-white/40"}>
+                  Sign In
+                </Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button
+                  type="button"
+                  className={
+                    "h-8 rounded-full font-semibold active:scale-95 px-4 pt-0.5"
+                  }
+                >
+                  Get started
+                  <ArrowRight className=" h-3 w-3 opacity-60" />
+                </Button>
+              </SignUpButton>
+            </Show>
+          </ClerkLoaded>
         </div>
       </nav>
     </header>
