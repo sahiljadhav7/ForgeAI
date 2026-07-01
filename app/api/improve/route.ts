@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { workspaceId, userId, messages, fileData } = body as {
-    workspaceId: string | null;
+  const { workspaceId, userId, userRequest, fileData } = body as {
+    workspaceId: string;
     userId: string;
     userRequest: string;
     fileData: FileData;
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         1. Understand what the user wants improved.
         2. Identify which files need to change.
         3. Call update_file for each file that needs changes (always include the COMPLETE file, not just the diff).
-         4. Once all files are updated, call done_improving with a short summary.
+        4. Once all files are updated, call done_improving with a short summary.
 
         RULES:
          - Always write complete file contents — never partial snippets.
@@ -123,6 +123,72 @@ export async function POST(request: NextRequest) {
           done_improving: { autoApprove: true },
         },
       });
+
+      try {
+        agent.subscribe((event) => {
+          if (event.type === "tool-started") {
+            const name = event.toolCall?.toolName;
+            if (name === "update_file") {
+              const path =
+                (event.toolCall?.input as { path?: string })?.path ?? "a file";
+              enqueue(
+                sseEvent("thinking", { text: `\nUpdating \`${path}\`...` }),
+              );
+            } else if (name === "done_improving") {
+              enqueue(
+                sseEvent("thinking", { text: `\nFinalizing improvements...` }),
+              );
+            }
+          }
+        });
+
+        enqueue(sseEvent("status", { message: "Cline agent starting1" }));
+        const result = await agent.run(userRequest);
+
+        if (result.status === "failed") {
+          throw new Error(result.error?.message ?? "Agent run failed");
+        }
+
+        const newFileData: FileData = {
+          files: patchedFiles,
+          dependencies: fileData.dependencies,
+          title: fileData.title,
+        };
+
+        await db.workspace.update({
+          where: { id: workspaceId, userId },
+          data: { fileData: newFileData as never },
+        });
+
+        await db.user.update({
+          where: { id: userId },
+          data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
+        });
+
+        const updatedUser = await db.user.findUnique({
+          where: { id: userId },
+          select: { credits: true },
+        });
+
+        enqueue(
+          sseEvent("done", {
+            fileData: newFileData,
+            summary: finalSummary || result.outputText,
+            creditsRemaining:
+              updatedUser?.credits ?? user.credits - CREDIT_COST_PER_GENERATION,
+          }),
+        );
+      } catch (error) {
+        console.error("[improve] Error:", error);
+        enqueue(
+          sseEvent("error", {
+            message:
+              error instanceof Error ? error.message : "Something went wrong",
+          }),
+        );
+      } finally {
+        controller.close();
+      }
     },
   });
   return new Response(stream, {
@@ -137,32 +203,6 @@ export async function POST(request: NextRequest) {
 export const runtime = "nodejs";
 export const maxDuration = 300;
 `~`;
-function sseEvent(
-  arg0: string,
-  arg1: { path: any; code: any; reason: any },
-): string {
-  throw new Error("Function not implemented.");
+function sseEvent(event: string, data: Record<string, unknown>): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
-
-// function createTool(arg0: {
-//   name: string;
-//   description: string;
-//   inputSchema: z.ZodObject<
-//     { path: z.ZodString; code: z.ZodString; reason: z.ZodString },
-//     "strip",
-//     z.ZodTypeAny,
-//     { path: string; code: string; reason: string },
-//     { path: string; code: string; reason: string }
-//   >;
-//   execute({
-//     path,
-//     code,
-//     reason,
-//   }: {
-//     path: any;
-//     code: any;
-//     reason: any;
-//   }): Promise<string>;
-// }) {
-//   throw new Error("Function not implemented.");
-// }
