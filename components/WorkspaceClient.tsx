@@ -307,7 +307,7 @@ const WorkspaceClient = ({
       <ChatPanel
         messages={messages}
         isGenerating={isGenerating}
-        isImproving={false}
+        isImproving={isImproving}
         statusLog={statusLog}
         credits={credits}
         onStop={handleStop}
