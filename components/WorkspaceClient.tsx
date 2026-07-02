@@ -15,6 +15,7 @@ interface WorkspaceClientProps {
   initialPrompt: string | null;
   userCredits: number;
   userId: string;
+  userPlan?: string | null;
   workspace: WorkspaceData | null;
 }
 
@@ -330,6 +331,7 @@ const WorkspaceClient = ({
         }
         appTitle={fileData?.title ?? workspace?.title ?? null}
         isProUser={userPlan == "pro"}
+        onImprove={handleImprove}
       />
     </div>
   );
