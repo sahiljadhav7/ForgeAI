@@ -1,3 +1,4 @@
+import arcjet, { detectBot,shield } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { redirect } from "next/dist/server/api-utils";
 import { NextResponse } from "next/server";
@@ -6,6 +7,19 @@ const isProtectedRoute = createRouteMatcher([
   "/workspace(.*)",
   "/projects(.*)",
 ]);
+
+const arcjetKey = process.env.ARCJET_KEY ?? "";
+
+const aj = arcjet({
+  key: arcjetKey,
+  rules: [
+    shield({ mode: "LIVE" }),
+    detectBot({
+      mode: "LIVE",
+      allow: ["CATEGORY:SEARCH_ENGINE", "CATEGORY:PREVIEW"],
+    }),
+  ],
+});
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
