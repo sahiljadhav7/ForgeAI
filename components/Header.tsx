@@ -50,8 +50,8 @@ const Header = async () => {
               {user && (
                 <PricingModal>
                   <span className="inline-flex h-8 items-center gap=1.5 rounded-full border border-white/10 bg-white/5 px-3 text-white/70 text-13px font-medium">
-                    <Zap className="h-3 w-3 fill-white/70" /> {user.credits}/{" "}
-                    {PLANS[user?.plan as Plan].credits}credits
+                    <Zap className="h-3 w-3 fill-white/70" /> {user.credits}
+                    credits
                   </span>
                 </PricingModal>
               )}

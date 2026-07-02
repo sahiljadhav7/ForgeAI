@@ -180,7 +180,7 @@ function SandpackInner({
 
   const handleImproveSubmit = async () => {
     const trimmed = improveInput.trim();
-    if (!trimmed || isImproving) return;
+    if (!trimmed || isImproving || !onImprove) return;
     setImproveInput("");
     setShowImproveInput(false);
     await onImprove(trimmed);
@@ -237,7 +237,7 @@ function SandpackInner({
   <body>
     <div id="root"></div>
   </body>
-</html>`,
+            </html>`,
       );
 
       for (const [filePath, fileObj] of Object.entries(filesToZip)) {
@@ -323,7 +323,10 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
                     value={improveInput}
                     onChange={(e) => setImproveInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") handleImproveSubmit();
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleImproveSubmit().catch(() => {});
+                      }
                       if (e.key === "Escape") setShowImproveInput(false);
                     }}
                     placeholder="What should I improve?"

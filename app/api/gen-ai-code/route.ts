@@ -169,6 +169,7 @@ export async function POST(request: NextRequest) {
   }
 
   const encoder = new TextEncoder();
+
   const stream = new ReadableStream({
     async start(controller) {
       const enqueue = (chunk: string) =>
@@ -181,8 +182,8 @@ export async function POST(request: NextRequest) {
           "gemini-2.5-flash-lite",
         ].filter(Boolean);
 
-        const MAX_RETRIES_PER_MODEL = 3;
-        const RETRY_DELAY_MS = 1500;
+        const MAX_RETRIES_PER_MODEL = 5;
+        const RETRY_DELAY_MS = 2000;
 
         let geminiStream;
         let lastError: unknown;
@@ -216,12 +217,13 @@ export async function POST(request: NextRequest) {
               }
 
               if (attempt < MAX_RETRIES_PER_MODEL) {
+                const delayMs = RETRY_DELAY_MS * Math.pow(1.5, attempt - 1);
                 enqueue(
                   sseEvent("status", {
-                    message: `High demand, retrying (${attempt}/${MAX_RETRIES_PER_MODEL - 1})…`,
+                    message: `High demand, retrying (${attempt}/${MAX_RETRIES_PER_MODEL})…`,
                   }),
                 );
-                await sleep(RETRY_DELAY_MS * attempt);
+                await sleep(delayMs);
               } else {
                 enqueue(
                   sseEvent("status", {

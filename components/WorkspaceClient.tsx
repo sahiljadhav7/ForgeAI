@@ -39,7 +39,7 @@ const WorkspaceClient = ({
   userCredits,
   workspace,
   userId,
-  // userPlan,
+  userPlan,
 }: WorkspaceClientProps) => {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(
@@ -91,6 +91,107 @@ const WorkspaceClient = ({
       ),
     );
   };
+
+  const handleImprove = useCallback(
+    async (userRequest: string) => {
+      if (isGenerating || isImproving) return;
+      if (credits < MIN_CREDITS_TO_GENERATE) return;
+      if (!workspaceIdRef.current) return;
+
+      const currentFileData = fileDataRef.current;
+      if (!currentFileData) return;
+
+      setIsImproving(true);
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: userRequest },
+        { role: "assistant", content: "Improving your code..." },
+      ]);
+
+      try {
+        const res = await fetch("/api/improve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId: workspaceIdRef.current,
+            userId,
+            fileData: currentFileData,
+            userRequest,
+          }),
+        });
+
+        if (res.status === 403) {
+          toast.error("upgrage to Starter or Pro to use Improve with AI");
+          setMessages((prev) => prev.slice(0, -2));
+          return;
+        }
+        if (res.status === 402) {
+          toast.error("Not enough credits");
+          setMessages((prev) => prev.slice(0, -2));
+          return;
+        }
+        if (!res.ok || !res.body) throw new Error("Improve request failed");
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let accumulatedThinking = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data:")) continue;
+            try {
+              const event = JSON.parse(line.slice(6));
+
+              if (event.type === "thinking") {
+                accumulatedThinking += event.text;
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content: accumulatedThinking,
+                  };
+                  return updated;
+                });
+              } else if (event.type === "file_patch") {
+                // file_patch events are recieved here but intentioally not applied
+                // to state per-patch The done event carries the complete final
+                // fileData so per-patch state updates are unnecessary and would cause sandpack to recompile on every individual file update.
+              } else if (event.type === "done") {
+                setFileData(event.fileData);
+                setCredits(event.creditsRemaining);
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: "assistant",
+                    content: event.summary,
+                  };
+                  return updated;
+                });
+              } else if (event.type === "error") {
+                throw new Error(event.message);
+              }
+            } catch {}
+          }
+        }
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Something went wrong.",
+        );
+        setMessages((prev) => prev.slice(0, -2));
+      } finally {
+        setIsImproving(false);
+      }
+    },
+    [credits, isGenerating, isImproving],
+  );
 
   const handleGenerate = useCallback(
     async (prompt: string, imageUrl?: string) => {
@@ -227,6 +328,8 @@ const WorkspaceClient = ({
             `There is an error in the preview:\n\n\`\`\`\n${error}\n\`\`\`\n\nPlease fix it.`,
           )
         }
+        appTitle={fileData?.title ?? workspace?.title ?? null}
+        isProUser={userPlan == "pro"}
       />
     </div>
   );
