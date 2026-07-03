@@ -4,7 +4,6 @@ import { FileData, Message } from "@/types/workspace";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { detectPromptInjection } from "@arcjet/next";
 import { aj } from "@/lib/arcjet";
 
 function trimHistory(messages: Message[]): Message[] {
@@ -15,7 +14,7 @@ function trimHistory(messages: Message[]): Message[] {
 const SYSTEM_PROMPT = `You are an expert React developer. Your job is to generate complete, working React applications based on user prompts.
 
 RULES:
-1. Always respond with a valid JSON object — no markdown fences, no extra text.
+1. Always respond with a valid JSON object - no markdown fences, no extra text.
 2. The JSON must match this exact shape:
 {
   "assistantMessage": "<brief explanation of what you built/changed>",
@@ -32,7 +31,7 @@ RULES:
 4. Use Tailwind CSS for all styling. Do not use CSS modules or inline styles unless absolutely necessary.
 5. The entry point must always be /App.js and must export a default component.
 6. All imports must reference files you include in "files" or packages in "dependencies".
-7. Do not include react, react-dom, or tailwindcss in "dependencies" — they are always available.
+7. Do not include react, react-dom, or tailwindcss in "dependencies" - they are always available.
 8. When modifying existing code, include ALL files (both changed and unchanged) in "files".
 9. Keep code clean, readable, and production-quality.
 10. If the user attaches an image, use it as a design reference and match the layout/style as closely as possible.`;
@@ -75,14 +74,37 @@ function sleep(ms: number) {
 function isTransientGeminiError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
-  // Check status code on the error object itself (SDK ApiError shape)
   const err = error as Error & { status?: number; code?: number };
-  if (err.status === 503 || err.code === 503) return true;
+  if (err.status === 429 || err.status === 500 || err.status === 503) {
+    return true;
+  }
+  if (err.code === 429 || err.code === 500 || err.code === 503) {
+    return true;
+  }
 
-  // Also check the message string (which may contain raw JSON)
-  return /503|UNAVAILABLE|high demand|temporar|timeout|deadline/i.test(
+  return /429|500|503|UNAVAILABLE|high demand|temporar|timeout|deadline|overloaded/i.test(
     error.message,
   );
+}
+
+function getGenerationModels() {
+  return [
+    process.env.GEMINI_MODEL ?? "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+  ].filter((model, index, models): model is string => {
+    return Boolean(model) && models.indexOf(model) === index;
+  });
+}
+
+function getReadableGeminiError(error: unknown) {
+  if (isTransientGeminiError(error)) {
+    return "Gemini is temporarily unavailable. Please try again in a moment.";
+  }
+
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again.";
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -98,13 +120,13 @@ function buildContents(messages: Message[], fileData: FileData | null) {
       let text = msg.content;
 
       if (msg.imageUrl) {
-        text = `[The user has attached an image. Use this URL directly in the generated app where relevant (as image src, background-image, etc,): ${msg.imageUrl}\n\n${text} ]`;
+        text = `[The user has attached an image. Use this URL directly in the generated app where relevant (as image src, background-image, etc.): ${msg.imageUrl}\n\n${text}]`;
       }
 
       const isLast = idx === trimmed.length - 1;
       if (!isLast && fileData) {
         text +=
-          "\n\n current project files for context:\n" +
+          "\n\nCurrent project files for context:\n" +
           JSON.stringify(fileData, null, 2);
       }
 
@@ -133,7 +155,6 @@ export async function POST(request: NextRequest) {
   if (!messages?.length) {
     return Response.json({ message: "No message provided" }, { status: 400 });
   }
-  // Arcjet: rate Limit, prompt injection, sensiitiveinfo
 
   const arcjetReq = new Request(request.url, {
     method: request.method,
@@ -176,23 +197,23 @@ export async function POST(request: NextRequest) {
         controller.enqueue(encoder.encode(chunk));
 
       try {
+        if (!process.env.GEMINI_API_KEY) {
+          throw new Error("GEMINI_API_KEY is not configured");
+        }
+
         const contents = buildContents(messages, fileData);
-        const modelsToTry = [
-          process.env.GEMINI_MODEL ?? "gemini-3.5-flash",
-          "gemini-2.5-flash",
-          "gemini-2.5-flash-lite",
-        ].filter(Boolean);
+        const modelsToTry = getGenerationModels();
+        const maxRetriesPerModel = 5;
+        const retryDelayMs = 2000;
 
-        const MAX_RETRIES_PER_MODEL = 5;
-        const RETRY_DELAY_MS = 2000;
-
-        let geminiStream;
+        let accumulated = "";
         let lastError: unknown;
+        let lastEmitTime = 0;
 
         outer: for (const model of modelsToTry) {
-          for (let attempt = 1; attempt <= MAX_RETRIES_PER_MODEL; attempt++) {
+          for (let attempt = 1; attempt <= maxRetriesPerModel; attempt++) {
             try {
-              geminiStream = await ai.models.generateContentStream({
+              const geminiStream = await ai.models.generateContentStream({
                 model,
                 contents,
                 config: {
@@ -204,31 +225,60 @@ export async function POST(request: NextRequest) {
                   },
                 },
               });
+
+              accumulated = "";
+
+              for await (const chunk of geminiStream) {
+                const parts = chunk.candidates?.[0]?.content?.parts ?? [];
+
+                for (const part of parts) {
+                  if (!part.text) continue;
+
+                  if (part.thought) {
+                    const now = Date.now();
+                    if (now - lastEmitTime > 600) {
+                      const label = extractThoughtLabel(part.text);
+                      if (label) {
+                        enqueue(sseEvent("status", { message: label }));
+                        lastEmitTime = now;
+                      }
+                    }
+                  } else {
+                    accumulated += part.text;
+                  }
+                }
+              }
+
+              if (!accumulated.trim()) {
+                throw new Error("Model returned an empty response");
+              }
+
               break outer;
             } catch (error) {
               lastError = error;
+              accumulated = "";
 
               if (!isTransientGeminiError(error)) {
                 enqueue(
                   sseEvent("status", {
-                    message: `Model ${model} unavailable, trying fallback…`,
+                    message: `Model ${model} failed, trying fallback...`,
                   }),
                 );
                 break;
               }
 
-              if (attempt < MAX_RETRIES_PER_MODEL) {
-                const delayMs = RETRY_DELAY_MS * Math.pow(1.5, attempt - 1);
+              if (attempt < maxRetriesPerModel) {
+                const delayMs = retryDelayMs * Math.pow(1.5, attempt - 1);
                 enqueue(
                   sseEvent("status", {
-                    message: `High demand, retrying (${attempt}/${MAX_RETRIES_PER_MODEL})…`,
+                    message: `Gemini is busy, retrying ${model} (${attempt}/${maxRetriesPerModel})...`,
                   }),
                 );
                 await sleep(delayMs);
               } else {
                 enqueue(
                   sseEvent("status", {
-                    message: `Model ${model} still unavailable, trying fallback…`,
+                    message: `Model ${model} is still unavailable, trying fallback...`,
                   }),
                 );
               }
@@ -236,34 +286,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!geminiStream) {
+        if (!accumulated.trim()) {
           throw (
             lastError ?? new Error("All models unavailable. Please try again.")
           );
-        }
-
-        let accumulated = "";
-        let lastEmitTime = 0;
-
-        for await (const chunk of geminiStream) {
-          const parts = chunk.candidates?.[0]?.content?.parts ?? [];
-
-          for (const part of parts) {
-            if (!part.text) continue;
-
-            if (part.thought) {
-              const now = Date.now();
-              if (now - lastEmitTime > 600) {
-                const label = extractThoughtLabel(part.text);
-                if (label) {
-                  enqueue(sseEvent("status", { message: label }));
-                  lastEmitTime = now;
-                }
-              }
-            } else {
-              accumulated += part.text;
-            }
-          }
         }
 
         let parsed: {
@@ -278,7 +304,7 @@ export async function POST(request: NextRequest) {
         } catch {
           enqueue(
             sseEvent("error", {
-              message: "AI returned invalid JSON. Please try again",
+              message: "AI returned invalid JSON. Please try again.",
             }),
           );
           controller.close();
@@ -295,16 +321,14 @@ export async function POST(request: NextRequest) {
         if (!files || typeof files !== "object") {
           enqueue(
             sseEvent("error", {
-              message: "AI response missing files. Please try again",
+              message: "AI response missing files. Please try again.",
             }),
           );
           controller.close();
           return;
         }
 
-        // validate npm packages
-
-        enqueue(sseEvent("status", { message: "validating packages.." }));
+        enqueue(sseEvent("status", { message: "Validating packages..." }));
         const validatedDeps = await validateDependencies(dependencies ?? {});
         const newFileData: FileData = {
           files,
@@ -312,10 +336,10 @@ export async function POST(request: NextRequest) {
           title: aiTitle,
         };
 
-        // Upsert workspace + deduct credit
-        enqueue(sseEvent("status", { message: "Saving…" }));
+        enqueue(sseEvent("status", { message: "Saving..." }));
 
-        const lastUserMessage = messages[messages.length - 1];
+        const lastUserPrompt =
+          [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
         const updatedMessages: Message[] = [
           ...messages,
           { role: "assistant", content: assistantMessage },
@@ -333,7 +357,7 @@ export async function POST(request: NextRequest) {
             : db.workspace.create({
                 data: {
                   userId,
-                  title: aiTitle ?? lastUserMessage.content.slice(0, 80),
+                  title: aiTitle ?? lastUserPrompt.slice(0, 80),
                   messages: updatedMessages as never,
                   fileData: newFileData as never,
                 },
@@ -348,7 +372,6 @@ export async function POST(request: NextRequest) {
           where: { id: userId },
           select: { credits: true },
         });
-        //final event
 
         enqueue(
           sseEvent("done", {
@@ -361,14 +384,9 @@ export async function POST(request: NextRequest) {
         );
       } catch (err: unknown) {
         console.error("[gen-ai-code] stream error:", err);
-        const message =
-          err instanceof Error
-            ? err.message
-            : "something went wrong. Please try again";
         enqueue(
           sseEvent("error", {
-            // include the original error message in dev to aid debugging
-            message,
+            message: getReadableGeminiError(err),
           }),
         );
       } finally {
@@ -381,7 +399,7 @@ export async function POST(request: NextRequest) {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      connection: "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }
