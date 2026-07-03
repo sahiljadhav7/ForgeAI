@@ -42,7 +42,9 @@ const WorkspaceClient = ({
   userId,
   userPlan,
 }: WorkspaceClientProps) => {
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(
+    workspace?.id ?? null,
+  );
   const [messages, setMessages] = useState<Message[]>(
     parseMessages(workspace?.messages),
   );
@@ -111,9 +113,11 @@ const WorkspaceClient = ({
       ]);
 
       try {
+        improveAbortRef.current = new AbortController();
         const res = await fetch("/api/improve", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: improveAbortRef.current.signal,
           body: JSON.stringify({
             workspaceId: workspaceIdRef.current,
             userId,
@@ -183,15 +187,21 @@ const WorkspaceClient = ({
           }
         }
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          setMessages((prev) => prev.slice(0, -2));
+          return;
+        }
+
         toast.error(
           err instanceof Error ? err.message : "Something went wrong.",
         );
         setMessages((prev) => prev.slice(0, -2));
       } finally {
+        improveAbortRef.current = null;
         setIsImproving(false);
       }
     },
-    [credits, isGenerating, isImproving],
+    [credits, isGenerating, isImproving, userId],
   );
 
   const handleGenerate = useCallback(
