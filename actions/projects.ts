@@ -43,8 +43,8 @@ export async function getUserProjects(): Promise<ProjectSummary[]> {
       id: w.id,
       title: w.title,
       firstPrompt: firstUserMsg?.content?.slice(0, 120) ?? null,
-      createdAt: w.createdAt,
-      updatedAt: w.updatedAt,
+      createdAt: w.createdAt.toISOString(),
+      updatedAt: w.updatedAt.toISOString(),
       messageCount: Array.isArray(w.messages) ? w.messages.length : 0,
     };
   });
