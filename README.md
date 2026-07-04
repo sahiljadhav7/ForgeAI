@@ -1,142 +1,161 @@
-# AI App Builder
+# ForgeAI
 
-AI App Builder is a full-stack AI-powered web application that transforms natural language prompts into working applications. Describe the product you want to build, and the AI generates an interactive workspace where you can chat, iterate, preview, and refine your application in real time.
+[Live Demo](https://www.forgeai.lol) | [Repository](https://github.com/sahiljadhav7/ForgeAI)
 
-The project is built with Next.js 16, React 19, TypeScript, Prisma, PostgreSQL, Google Gemini, and Clerk to provide a modern, production-ready development experience.
+![ForgeAI hero](./public/README-hero.png)
 
----
+AI app builder that turns natural-language prompts into working React apps inside a live browser workspace. Users can generate an app, inspect the code, preview it instantly with Sandpack, iterate through chat, upload a reference image, and export the result as a ZIP.
 
-## Features
+This project was an attempt to build the layer around AI code generation that most demos skip: persistent workspaces, streaming UX, plan and credit controls, safe retries, and a preview environment that feels immediate instead of fragile.
 
-- Generate applications from natural language prompts
-- Chat-based AI workspace for iterative development
-- Live code generation with streaming responses
-- Interactive preview and code editor
-- Persistent workspaces and generation history
-- Secure authentication with Clerk
-- Request protection and rate limiting with Arcjet
-- Responsive interface built with Tailwind CSS and shadcn/ui
+## What It Does
 
----
+- Generates React apps from plain-English prompts
+- Streams generation progress back to the UI in real time
+- Persists workspaces, messages, and generated files in PostgreSQL
+- Renders the generated app live in the browser with Sandpack
+- Supports image-guided generation through Supabase Storage uploads
+- Includes a Pro-only improvement agent for editing existing generated apps
+- Exports generated projects as downloadable ZIP files
+
+## Workspace
+
+![ForgeAI workspace](./public/README-workspace.png)
+
+The landing page includes a product mockup of the core workflow: prompt on the left, streamed assistant response in chat, and a live preview/code surface on the right.
+
+## Why I Built It
+
+Most AI app-generation demos stop at a single model call and a blob of code. I wanted to build something closer to a usable product:
+
+- a stateful workspace instead of a one-off response
+- a live preview loop instead of copy-pasting code elsewhere
+- retries and model fallbacks instead of brittle happy-path generation
+- gated premium workflows to reflect real product constraints
+- abuse protection around the most expensive endpoints
+
+## Interesting Engineering Problems
+
+### Streaming generation without a janky UI
+
+The generation route streams progress to the client over server-sent events. That lets the chat panel show incremental status updates while the model is still working, which makes the app feel much more responsive than a single blocking spinner.
+
+### Updating Sandpack without remounting the preview
+
+One of the trickier parts was keeping the live preview stable while code changed. The app keys the Sandpack provider only on the file path set, then pushes file content changes with `sandpack.updateFile()`. That avoids unnecessary remounts and makes iteration smoother.
+
+### Separating generation from improvement
+
+Initial generation and improvement are handled by different routes on purpose. The generation flow is optimized for returning a full project snapshot, while the improvement flow behaves more like an agent that reasons about which files to rewrite. Keeping those paths separate made plan-gating, prompts, and failure handling cleaner.
+
+### Making model output safe to use
+
+The Gemini generation route expects strict JSON, parses it defensively, validates dependencies against the npm registry, and only then persists the workspace. That extra validation step matters when the output is being fed directly into a live preview environment.
+
+### Protecting expensive AI routes
+
+Arcjet is used in two places: middleware protection and endpoint-level protection. The generation route applies rate limiting, prompt injection checks, and sensitive-info detection before doing the expensive work.
 
 ## Tech Stack
 
-### Frontend
+| Area         | Choices                                               |
+| ------------ | ----------------------------------------------------- |
+| Frontend     | Next.js 16, React 19, TypeScript, Tailwind CSS 4      |
+| UI           | shadcn/ui, Base UI, Lucide, Sonner, React Markdown    |
+| Live Preview | Sandpack                                              |
+| Backend      | Next.js App Router, Route Handlers, Server Components |
+| Database     | Prisma 7, PostgreSQL, Prisma PG adapter               |
+| Auth         | Clerk                                                 |
+| AI           | Google Gemini, Cline SDK                              |
+| Storage      | Supabase Storage                                      |
+| Security     | Arcjet                                                |
+| Export       | JSZip                                                 |
 
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
+## Architecture
 
-### Backend
+### Main flow
 
-- Next.js Server Actions
-- Prisma ORM
-- PostgreSQL
+1. A user signs in with Clerk.
+2. A local user record is created or updated in PostgreSQL.
+3. The user submits a prompt in the workspace.
+4. `/api/gen-ai-code` sends the conversation and file context to Gemini.
+5. The server streams status updates back to the client.
+6. The returned JSON is validated and persisted as workspace state.
+7. Sandpack renders the generated files as a live preview.
+8. The user can keep iterating in chat or use the Pro improvement agent.
+9. The generated app can be exported as a ZIP.
 
-### AI
+### Core pieces
 
-- Google Gemini API
-- Gemini 2.5 Flash
+- `app/api/gen-ai-code/route.ts`
+  Streams generation, validates model output, saves workspace data, and decrements credits.
+- `app/api/improve/route.ts`
+  Runs the Pro improvement flow with the Cline SDK and tool-driven file rewrites.
+- `components/WorkspaceClient.tsx`
+  Coordinates generation, improvement, streaming state, and workspace persistence in the UI.
+- `components/ChatPanel.tsx`
+  Handles prompts, uploaded reference images, credits display, and assistant messages.
+- `components/CodePanel.tsx`
+  Hosts Sandpack preview, code explorer, export, and the improvement UI.
+- `lib/checkUser.ts`
+  Syncs Clerk users into the local Prisma user table and handles plan updates.
+- `lib/arcjet.ts`
+  Centralizes endpoint protection rules.
 
-### Authentication & Security
+## Product Decisions
 
-- Clerk
-- Arcjet
+- Workspaces store `messages` and `fileData` as JSON so the schema can stay simple while the generated project structure remains flexible.
+- The app charges one credit per generation or improvement, which keeps the usage model easy to reason about.
+- The improvement workflow is Pro-only because it is more agentic, more expensive, and materially different from one-shot generation.
+- Image uploads go through Supabase Storage so prompts can include real visual references without bloating the database.
 
----
+## What I Learned
 
-## Getting Started
+- Good AI UX is as much about state management and recovery paths as it is about the model itself.
+- Streaming status updates dramatically improve perceived performance, even when total latency stays the same.
+- Separating "generate" from "improve" reduced complexity in both prompting and product logic.
+- Sandpack can feel surprisingly solid for this kind of workflow if file updates are handled carefully.
+
+## What I Would Improve Next
+
+- Add proper payments and subscription syncing for Starter and Pro plans
+- Add version history so users can compare generated iterations
+- Improve observability around model failures and retry paths
+- Add project templates and starter prompts
+- Deploy exported apps directly from the workspace
+
+## Local Setup
 
 ### Prerequisites
 
-- Node.js 20 or later
+- Node.js 20+
 - npm
 - PostgreSQL
+- Clerk project
+- Google Gemini API key
+- Arcjet key
+- Supabase project with a `workspace-images` bucket
 
-### Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/<your-username>/ai-app-builder.git
-cd ai-app-builder
-```
-
-Install dependencies:
+### Run locally
 
 ```bash
-npm install
-```
-
-Create a `.env.local` file:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/ai_app_builder
-
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
-
-ARCJET_KEY=your_arcjet_key
-
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-```
-
-Generate the Prisma client and synchronize the database:
-
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-Start the development server:
-
-```bash
+npm run prisma:generate
+npm run prisma:db:push
 npm run dev
 ```
-
-Open http://localhost:3000 in your browser.
-
----
 
 ## Project Structure
 
 ```text
-.
-├── app/              # App Router pages and API routes
-├── actions/          # Server Actions
-├── components/       # Reusable UI components
-├── lib/              # Shared utilities, AI, authentication
-├── prisma/           # Prisma schema and migrations
-├── public/           # Static assets
-└── types/            # Shared TypeScript types
+app/          App Router pages, layouts, and API routes
+actions/      Server-side data access helpers
+components/   Workspace UI and reusable components
+lib/          Prisma, Arcjet, constants, and shared helpers
+prisma/       Schema and migrations
+public/       Static assets
+types/        Shared TypeScript types
 ```
 
 ---
 
-## How It Works
-
-1. Sign in to the application.
-2. Enter a prompt describing the application you want to build.
-3. The AI generates an initial version of your project.
-4. Continue refining the application through the chat interface.
-5. Preview the generated application and inspect the generated code.
-
----
-
-## Built With
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Prisma
-- PostgreSQL
-- Google Gemini API
-- Clerk
-- Arcjet
-
----
+Designed & built by Sahil Jadhav · 2026
