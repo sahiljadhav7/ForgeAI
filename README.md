@@ -28,10 +28,9 @@ The landing page includes a product mockup of the core workflow: prompt on the l
 
 ## Demo
 
-<video width="100%" controls>
-  <source src="./public/project1ForgeAi.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+## Demo
+
+[Watch the demo video](./public/project1ForgeAi.mp4)
 
 ## Why I Built It
 
