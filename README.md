@@ -24,14 +24,6 @@ This project was an attempt to build the layer around AI code generation that mo
 
 The landing page includes a product mockup of the core workflow: prompt on the left, streamed assistant response in chat, and a live preview/code surface on the right.
 
----
-
-## Demo
-
-## Demo
-
-[Watch the demo video](./public/project1ForgeAi.mp4)
-
 ## Why I Built It
 
 Most AI app-generation demos stop at a single model call and a blob of code. I wanted to build something closer to a usable product:
