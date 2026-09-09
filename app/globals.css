@@ -89,4 +89,15 @@
       opacity: 0;
     }
   }
+
+  @keyframes generate-ripple {
+    from {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0.6;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(16);
+      opacity: 0;
+    }
+  }
 }

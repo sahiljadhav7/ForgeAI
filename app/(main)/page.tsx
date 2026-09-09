@@ -4,6 +4,7 @@ import { SUGGESTIONS } from "@/lib/data";
 import { BlueTitle, GrayTitle } from "@/components/reusable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GenerateButton } from "@/components/ui/generate-button";
 import { cn } from "@/lib/utils";
 import { FEATURES, PLACEHOLDERS, STEPS } from "@/lib/data";
 import { PricingTable, SignInButton, useAuth } from "@clerk/nextjs";
@@ -107,20 +108,13 @@ export default function Home() {
                 Press ↵ to generate. shift+↵ for new line
               </span>
               {isSignedIn ? (
-                <Button
+                <GenerateButton
                   onClick={handleSubmit}
                   disabled={!prompt.trim()}
-                  className="h-8 rounded-full px-5 semibold"
-                  variant={prompt.trim() ? "default" : "secondary"}
-                >
-                  Generate
-                </Button>
+                />
               ) : (
                 <SignInButton mode="modal">
-                  <Button className="h-8 rounded-full bg-white px-5 font-semibold ">
-                    Generate
-                    <ArrowRight className="h-3.5 w-3.5"></ArrowRight>
-                  </Button>
+                  <GenerateButton showArrow />
                 </SignInButton>
               )}
             </div>
