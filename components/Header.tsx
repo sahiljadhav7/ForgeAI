@@ -3,21 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Zap } from "lucide-react";
 import {
-  ClerkLoaded,
-  ClerkLoading,
-  SignedIn,
-  SignedOut,
   SignUpButton,
   UserButton,
   SignInButton,
 } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
 import { checkUser } from "@/lib/checkUser";
-import { Plan } from "@/types/plans";
-import { PLANS } from "@/lib/constants";
 
 const Header = async () => {
+  const { userId } = await auth();
   const user = await checkUser();
 
   return (
@@ -35,12 +31,8 @@ const Header = async () => {
         </Link>
 
         <div className="flex items-center gap-4">
-          <ClerkLoading>
-            <div className="h-8 w-20 animate-pulse rounded-full bg-white/10" />
-          </ClerkLoading>
-
-          <ClerkLoaded>
-            <SignedIn>
+          {userId ? (
+            <>
               <Link
                 href={"/projects"}
                 className="text-13px font-medium text-white/40 transition-colors hover:text-whtite/80"
@@ -58,9 +50,9 @@ const Header = async () => {
               )}
 
               <UserButton />
-            </SignedIn>
-
-            <SignedOut>
+            </>
+          ) : (
+            <>
               <SignInButton mode="modal">
                 <Button variant="ghost" size="sm" className={"*:text-white/40"}>
                   Sign In
@@ -77,8 +69,8 @@ const Header = async () => {
                   <ArrowRight className=" h-3 w-3 opacity-60" />
                 </Button>
               </SignUpButton>
-            </SignedOut>
-          </ClerkLoaded>
+            </>
+          )}
         </div>
       </nav>
     </header>
