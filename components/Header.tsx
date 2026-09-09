@@ -5,7 +5,8 @@ import { ArrowRight, Zap } from "lucide-react";
 import {
   ClerkLoaded,
   ClerkLoading,
-  Show,
+  SignedIn,
+  SignedOut,
   SignUpButton,
   UserButton,
   SignInButton,
@@ -39,7 +40,7 @@ const Header = async () => {
           </ClerkLoading>
 
           <ClerkLoaded>
-            <Show when="signed-in">
+            <SignedIn>
               <Link
                 href={"/projects"}
                 className="text-13px font-medium text-white/40 transition-colors hover:text-whtite/80"
@@ -57,9 +58,9 @@ const Header = async () => {
               )}
 
               <UserButton />
-            </Show>
+            </SignedIn>
 
-            <Show when="signed-out">
+            <SignedOut>
               <SignInButton mode="modal">
                 <Button variant="ghost" size="sm" className={"*:text-white/40"}>
                   Sign In
@@ -76,7 +77,7 @@ const Header = async () => {
                   <ArrowRight className=" h-3 w-3 opacity-60" />
                 </Button>
               </SignUpButton>
-            </Show>
+            </SignedOut>
           </ClerkLoaded>
         </div>
       </nav>
