@@ -65,9 +65,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { workspaceId, userId, userRequest, fileData } = body as {
+  const { workspaceId, userRequest, fileData } = body as {
     workspaceId: string;
-    userId: string;
     userRequest: string;
     fileData: FileData;
     messages: string;
@@ -80,6 +79,14 @@ export async function POST(request: NextRequest) {
 
   if (!user)
     return Response.json({ message: "user not found" }, { status: 404 });
+
+  const workspace = await db.workspace.findFirst({
+    where: { id: workspaceId, userId: user.id },
+    select: { id: true },
+  });
+  if (!workspace) {
+    return Response.json({ message: "Workspace not found" }, { status: 404 });
+  }
   if (user.plan !== "pro") {
     return Response.json({ message: "Upgrade required" }, { status: 403 });
   }
@@ -245,17 +252,17 @@ export async function POST(request: NextRequest) {
         };
 
         await db.workspace.update({
-          where: { id: workspaceId, userId },
+          where: { id: workspaceId, userId: user.id },
           data: { fileData: newFileData as never },
         });
 
         await db.user.update({
-          where: { id: userId },
+          where: { id: user.id },
           data: { credits: { decrement: CREDIT_COST_PER_GENERATION } },
         });
 
         const updatedUser = await db.user.findUnique({
-          where: { id: userId },
+          where: { id: user.id },
           select: { credits: true },
         });
 
