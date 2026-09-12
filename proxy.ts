@@ -1,6 +1,5 @@
 import arcjet, { detectBot, shield } from "@arcjet/next";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { redirect } from "next/dist/server/api-utils";
 import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher([
@@ -26,10 +25,9 @@ export default clerkMiddleware(async (auth, req) => {
   if (decision.isDenied()) {
     return NextResponse.json({ message: "Access Denied" }, { status: 403 });
   }
-  const { userId } = await auth();
+  const { userId, redirectToSignIn } = await auth();
 
   if (!userId && isProtectedRoute(req)) {
-    const { redirectToSignIn } = await auth();
     return redirectToSignIn();
   }
   return NextResponse.next();
