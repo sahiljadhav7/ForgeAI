@@ -1,6 +1,5 @@
 import type { PricingTable } from "@clerk/nextjs";
 import type { ComponentProps } from "react";
-import { PRICING_PLANS } from "@/lib/constants";
 
 type PricingAppearance = NonNullable<
   ComponentProps<typeof PricingTable>["appearance"]
@@ -21,8 +20,6 @@ const DB_LITERALS = {
 
 const cardShadow = "0 22px 60px rgba(0, 0, 0, 0.3)";
 
-const proPlanId = PRICING_PLANS.find((plan) => plan.key === "pro")?.planId;
-
 // Element overrides are style objects, not Tailwind classes: Clerk's own
 // styles are unlayered and would beat Tailwind v4's layered utilities.
 export const pricingAppearance: PricingAppearance = {
@@ -36,22 +33,29 @@ export const pricingAppearance: PricingAppearance = {
     colorBorder: DB_LITERALS.border,
     fontFamily: "var(--font-inter), Inter, sans-serif",
     fontFamilyButtons: "var(--font-inter), Inter, sans-serif",
-    // Clerk's cards use the xl step (a little above this base), so they land
-    // close to the page's 26px cards; buttons use the base.
+    // Buttons use this base. Clerk scales it up for cards (to 36px), so the
+    // card radius is pinned below.
     borderRadius: "18px",
   },
   elements: {
-    // Same glass surface and 1px border as the page's own cards.
+    // Same glass surface, 26px radius and 1px border as the page's own cards.
+    // Clerk's `[data-variant="default"]` rule zeroes the border and sets its
+    // own shadow, so those go under a doubled-class selector that outranks it.
     pricingTableCard: {
       background: "var(--db-surface)",
-      border: "1px solid var(--db-border)",
-      boxShadow: cardShadow,
+      borderRadius: "26px",
+      "&&[data-variant]": {
+        border: "1px solid var(--db-border)",
+        boxShadow: cardShadow,
+      },
     },
-    ...(proPlanId && {
-      [`pricingTableCard__${proPlanId}`]: {
+    // Clerk keys per-plan elements by the plan's slug from the Clerk
+    // dashboard, not its cplan_ id, so this matches in every instance.
+    pricingTableCard__pro: {
+      "&&[data-variant]": {
         borderColor: "var(--db-accent-solid)",
       },
-    }),
+    },
     pricingTableCardFooterButton: {
       backgroundImage: "var(--db-accent)",
       color: "var(--db-on-accent)",
