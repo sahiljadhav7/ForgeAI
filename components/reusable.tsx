@@ -1,25 +1,15 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export const BlueTitle = ({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) => {
-  return (
-    <span
-      className={`bg-linear-to-br font-display from-blue-300 via-blue-400 to-blue-600 bg-clip-text text-transparent ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
-
 // The Daybreak focus ring: a solid 2px peach outline, offset from the element.
 export const focusRingClass =
   "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-db-accent";
+
+// The same ring for every focused descendant, for wrappers whose controls
+// are rendered by another component (Clerk, PricingModal's trigger). Rounded
+// so it hugs pills and round avatars.
+export const focusRingWithinClass =
+  "[&_:focus-visible]:rounded-full [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-3 [&_:focus-visible]:outline-db-accent";
 
 // Daybreak display heading type: Inter display in warm white.
 export const displayHeadingClass =
@@ -30,6 +20,14 @@ export const displayHeadingClass =
 // and type.
 export const accentPillClass = cn(
   "rounded-full bg-(image:--db-accent) text-db-on-accent shadow-(--db-accent-shadow) transition-[filter,transform] hover:brightness-107 active:scale-95",
+  focusRingClass,
+);
+
+// The Daybreak secondary pill: the header's credits pill look (surface,
+// border, peach border on hover) with the focus ring and press feedback.
+// Callers add size, padding and type.
+export const secondaryPillClass = cn(
+  "rounded-full border border-db-border bg-db-surface text-db-text transition-[border-color,transform] hover:border-db-accent/40 active:scale-95",
   focusRingClass,
 );
 

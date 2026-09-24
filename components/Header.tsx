@@ -7,7 +7,7 @@ import PricingModal from "./PricingModal";
 import RisingSunMark from "./brand/RisingSunMark";
 import { checkUser } from "@/lib/checkUser";
 import { cn } from "@/lib/utils";
-import { accentPillClass } from "./reusable";
+import { accentPillClass, focusRingWithinClass } from "./reusable";
 
 // The app-wide header: the landing nav's sibling in the Daybreak palette.
 // Height stays 64px (h-16) so pages' mt-16 offsets keep working.
@@ -18,10 +18,13 @@ const Header = async () => {
   return (
     <header className="fixed top-0 left-0 z-50 h-16 w-full border-b border-db-border bg-db-surface/70 backdrop-blur-md">
       {/* One focus ring for every control in the bar, including the ones
-          Clerk and PricingModal render: a solid --db-accent-solid outline (close
-          to the landing composer's; ticket 07 reconciles the ring token),
-          rounded so it hugs the pills and the round avatar. */}
-      <nav className="mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-3 [&_:focus-visible]:outline-db-accent [&_:focus-visible]:rounded-full">
+          Clerk and PricingModal render (see focusRingWithinClass). */}
+      <nav
+        className={cn(
+          "mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6",
+          focusRingWithinClass,
+        )}
+      >
         <Link
           href="/"
           aria-label="Daybreak home"
