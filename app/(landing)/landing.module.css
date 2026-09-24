@@ -48,7 +48,7 @@
   --ph-y: 33; /* 446 − 413 */
   --ph-fs: 9.97;
   --tools-x: 19; /* 444 − 425 */
-  --tools-y: 92; /* 505 − 413 */
+  --tools-bottom: 21; /* card-h 143 − tools-y 92 − chip-h 30 */
   --chip-h: 30;
   --chip-r: 9;
   --chip-fs: 9;
@@ -374,12 +374,16 @@
 
 /* ───────── Composer card ───────── */
 
+/* --grow is how far the textarea has grown past one line (set by
+   Composer). The card grows downward by that much; the negative margin keeps
+   its layout box the base size so the centered hero doesn't shift. */
 .card {
   position: relative;
   flex: none;
   width: calc(var(--card-w) * var(--u));
-  height: calc(var(--card-h) * var(--u));
+  height: calc(var(--card-h) * var(--u) + var(--grow, 0px));
   margin-right: calc(3 * var(--u));
+  margin-bottom: calc(-1 * var(--grow, 0px));
   border-radius: calc(var(--card-r) * var(--u));
   background: rgba(41, 41, 43, 0.955);
   -webkit-backdrop-filter: blur(calc(26 * var(--u))) saturate(112%);
@@ -389,7 +393,9 @@
     0 calc(22 * var(--u)) calc(60 * var(--u)) rgba(0, 0, 0, 0.3);
 }
 
-/* The textarea sits where design.md's placeholder <p> sits, one line tall. */
+/* The textarea sits where design.md's placeholder <p> sits, one line tall
+   when empty. Composer sets its height from scrollHeight; max-height caps
+   the card at about 2x its base height (one line + card-h), then it scrolls. */
 .ph {
   position: absolute;
   left: calc(var(--ph-x) * var(--u));
@@ -397,9 +403,13 @@
   right: calc(24 * var(--u));
   display: block;
   height: 1.35em;
+  max-height: calc(1.35em + var(--card-h) * var(--u));
   padding: 0;
   resize: none;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
   color: rgba(255, 255, 255, 0.92);
   caret-color: #f49d70;
   font-size: calc(var(--ph-fs) * var(--u));
@@ -416,10 +426,11 @@
   text-overflow: ellipsis;
 }
 
+/* Pinned to the card's bottom edge so it rides down as the card grows. */
 .tools {
   position: absolute;
   left: calc(var(--tools-x) * var(--u));
-  top: calc(var(--tools-y) * var(--u));
+  bottom: calc(var(--tools-bottom) * var(--u));
   /* card right edge (425 + 708) minus the toolbar's measured right (1134): −1u */
   right: calc((425 + 708 - 1134) * var(--u));
   height: calc(var(--chip-h) * var(--u));
@@ -516,11 +527,17 @@
   height: auto;
 }
 
-.send:hover {
+/* Disabled (empty prompt) keeps the design.md look, so the empty state
+   stays pixel-exact; it just stops reacting. */
+.send:disabled {
+  cursor: default;
+}
+
+.send:not(:disabled):hover {
   filter: brightness(1.07);
 }
 
-.send:active {
+.send:not(:disabled):active {
   transform: scale(0.95);
 }
 
@@ -618,6 +635,7 @@
     font-size: clamp(11px, 1.35vw, 14px);
     line-height: 1.4;
     height: 1.4em;
+    max-height: 9.8em; /* 7 lines, about 2x the base card */
   }
 
   .tools {
@@ -739,6 +757,7 @@
   .ph {
     position: static;
     font-size: clamp(9.4px, 2.95vw, 14px);
+    max-height: 16.2em; /* 12 lines, about 1.9x the base card */
   }
 
   .tools {
@@ -783,6 +802,12 @@
 
   .h1 {
     font-size: clamp(24px, 5.4vh, 34px);
+  }
+
+  /* No room for 2x here: 4 lines keeps the grown card above the cue and
+     inside the stage. */
+  .ph {
+    max-height: 5.4em;
   }
 
   .proof {
@@ -933,5 +958,13 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
+  }
+
+  /* Auto-grow reads the textarea's height back straight after setting it.
+     With the forced duration above, the default transition-property (all)
+     would make that read return the old height, so opt these out. */
+  .stage .card,
+  .stage .ph {
+    transition: none !important;
   }
 }
