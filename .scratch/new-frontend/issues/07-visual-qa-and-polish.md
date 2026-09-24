@@ -156,3 +156,30 @@ A final pass on the finished landing page. Check it against `design.md` at every
    - Whether the disabled send needs a visual state (05).
    - Whether a lighter mobile video encode is wanted (mobile LCP/bytes).
 
+
+**2026-09-24 follow-up (Claude): Clerk flows checked with development keys**
+
+The owner added Clerk development keys (`pk_test`/`sk_test`) in `.env.local`, so the Clerk flows render locally. Checked on a prod build with the `run-app` skill:
+
+- **Signed out:** `/sign-in` and `/sign-up` render Clerk's forms. Get Started opens the sign-up modal ("Create your account"). Enter in the composer opens the sign-in modal and keeps the prompt in the textarea. No Clerk 400s.
+- **Signed-out submit → sign-in → workspace (spec § Composer):** typed "A recipe box with tags", pressed Enter, and signed in through the modal with a Clerk test email (`+clerk_test`, code 424242). Landed on `/workspace?prompt=A recipe box with tags`. **Passes.**
+- **Signed in** (test user via a Clerk sign-in token):
+  - Landing nav shows **My projects** (→ `/projects`) and the avatar, with no Get Started. The phone burger sheet mirrors this.
+  - Composer submit goes to `/workspace?prompt=A habit tracker⏎with streaks` (trimmed, newline kept).
+  - `/workspace` and `/projects` each have one `<main>` and use Inter.
+- **No generation:** as the owner asked, `/api/gen-ai-code` and `/api/improve` were blocked in the browser, so the workspace's auto-submit was aborted client-side ("Failed to fetch" toast) and credits stayed at 10. The ZIP export was not tested, because it needs a generated app.
+- **Data written:** one Clerk dev user (`daybreak-qa+clerk_test@example.com`, `user_3Jm81ragOexuhVwMvxc8KucbklH`) and its user row in the `.env` `DATABASE_URL` database, created by `checkUser` on first sign-in. Delete both if unwanted.
+
+**Bug found and fixed in `bf8bdfd`** (the PricingTable had never rendered locally before, so ticket 06 checked it by code only):
+- Clerk's `[data-variant="default"]` rule zeroed every card's border and replaced the shadow. These now sit under a doubled-class selector, and every card has the 1px `--db-border` and the page's shadow.
+- Cards measured 36px (Clerk scales the base radius). Now pinned to 26px.
+- The Pro accent was keyed by the production `cplan_` id, but Clerk keys per-plan elements by **slug** (`pricingTableCard__pro`), so it never matched in either instance. Now keyed by slug, and Pro shows the peach border.
+
+**Updated "Needs a human"**
+- Items 1 and 2 above are now verified, except the ZIP export and a real generation.
+- **Clerk dashboard content:**
+  - The Starter feature list reads "50 Geneartions/month" (typo).
+  - Pro lists "Access to ForgeAI agent".
+  - The Clerk app name is still "Forge" ("Sign in to Forge").
+  - Check that the production plan slug is also `pro`, since the Pro highlight now depends on it.
+- **Pre-existing, outside this redesign:** the workspace chat header shows "10 creditss" (`components/ChatPanel.tsx:175` appends a second "s").
