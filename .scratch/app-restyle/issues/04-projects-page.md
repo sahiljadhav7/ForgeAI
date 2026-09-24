@@ -1,6 +1,6 @@
 # 04 — Restyle the projects page and delete modal
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: `.scratch/app-restyle/spec.md` § Page treatments (Projects, Modals)
 
@@ -37,3 +37,34 @@ Spec: `.scratch/app-restyle/spec.md` § Page treatments (Projects, Modals)
 - `npm run lint`, `npm test`, `npm run build` and `npm run test:e2e` pass.
 
 ## Comments
+
+**2026-09-24 (agent):** Done.
+- `/projects` sits on `--db-base` with a faint lavender `<Glow>` at the top.
+  - The heading is `SectionLabel` "Your apps" over a display `<h1>` "Projects", with the subtitle in `--db-muted`.
+  - "New project" is one `<Link>` styled with `accentPillClass`, which fixes the nested `<Link><Button>`. The heading and button stack below `sm`.
+  - The empty state has a `--db-surface` icon tile, text in `--db-text`/`--db-muted` (the muted line is 14px, 6.5:1 on base) and the accent "Start building" pill.
+  - The empty state has no glow of its own. It sits under the page's lavender glow, which is the same `--db-glow-lavender` the landing CTA uses. A nested glow left a visible seam where it met the page glow.
+- Shared pieces in `components/reusable.tsx`:
+  - `Glow` (tone `lavender`/`peach`, height via `className`). The auth layout and the 404 now use it, with identical classes and no visual change.
+  - `focusRingClass`, the solid peach 2px outline at offset 3. `accentPillClass` uses it.
+  - `displayHeadingClass`, shared by `SectionHeading`, the 404 and projects.
+- `ProjectCard`:
+  - Cards are `--db-surface`, `rounded-db` and `--db-border`. On hover the border goes `db-accent/40` and the card goes `--db-surface-raised`.
+  - The title is in `--db-text`. The prompt (now 14px) and the meta (12px) are in `--db-muted`: 5.1:1 on surface and 4.6:1 on hover.
+  - The whole card is still the link, and the link now has the focus ring. The grid is still 1/2/3 columns.
+- `DeleteProjectModal`:
+  - It now renders its own trash `DialogTrigger`, with `aria-label="Delete {title}"`, muted text that turns `--db-danger` on hover, and the focus ring. Its `children` prop is gone, and ProjectCard was the only caller.
+  - The dialog inherits the remapped tokens.
+  - Cancel is `DialogClose render={<Button variant="outline">}`.
+  - Delete is `bg-db-danger` with `--db-base` text, 6.1:1. White text would be 3.1:1.
+- `BlueTitle` is kept, because ChatPanel still uses it (ticket 05 should delete it).
+- Verification:
+  - Screenshots at 1440×900, 900×900 and 390×844, with projects and empty, came from a temporary unauthenticated preview route that rendered the page's markup with fake projects. I deleted the route before committing.
+  - The hover state was checked through computed styles. Keyboard tab order is New project → Open card → Delete card → next card, and the ring is visible.
+  - Enter on the delete button opens the modal without navigating. Cancel closes it.
+  - I never confirmed a delete, and I didn't sign in, because signing in writes to the production DB. So the real `/projects` data path and the delete action are unverified. Ticket 07's signed-in pass should cover them.
+  - lint (0 errors, 9 existing warnings), `npm test` (47), build and `test:e2e` (25 passed, 3 skipped) all pass.
+- Code review fixes:
+  - Moved the trigger styling into the modal instead of passing a `triggerClassName`.
+  - Extracted the focus ring and display heading classes.
+  - Dropped the peach empty-state icon and the danger-on-focus colour.

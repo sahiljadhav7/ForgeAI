@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { Glow } from "@/components/reusable";
 
 // The landing CTA's dawn: lavender falling from the top, peach rising from
 // the bottom. The Clerk card itself is themed by the provider's appearance
@@ -13,14 +14,8 @@ const AuthLayout = ({
     <>
       <Header />
       <main className="relative isolate flex min-h-dvh items-center justify-center px-4 py-20">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[60%] bg-(image:--db-glow-lavender)"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[60%] bg-(image:--db-glow-peach)"
-        />
+        <Glow tone="lavender" className="h-[60%]" />
+        <Glow tone="peach" className="h-[60%]" />
         {children}
       </main>
     </>

@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export const BlueTitle = ({
   children,
@@ -16,11 +17,21 @@ export const BlueTitle = ({
   );
 };
 
+// The Daybreak focus ring: a solid 2px peach outline, offset from the element.
+export const focusRingClass =
+  "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-db-accent";
+
+// Daybreak display heading type: Inter display in warm white.
+export const displayHeadingClass =
+  "font-display text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.01em] text-db-text";
+
 // The Daybreak accent pill's colour, shadow, focus ring and press feedback
 // (the header's Get Started, the 404's Back home). Callers add size, padding
 // and type.
-export const accentPillClass =
-  "rounded-full bg-(image:--db-accent) text-db-on-accent shadow-(--db-accent-shadow) transition-[filter,transform] hover:brightness-107 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-db-accent active:scale-95";
+export const accentPillClass = cn(
+  "rounded-full bg-(image:--db-accent) text-db-on-accent shadow-(--db-accent-shadow) transition-[filter,transform] hover:brightness-107 active:scale-95",
+  focusRingClass,
+);
 
 // Daybreak section label: lavender, sentence case.
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => {
@@ -39,10 +50,37 @@ export const SectionHeading = ({
   line2: string;
 }) => {
   return (
-    <h2 className="font-display text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.01em] text-db-text">
+    <h2 className={displayHeadingClass}>
       {line1}
       <br />
       {line2}
     </h2>
+  );
+};
+
+// A faint Daybreak dawn glow behind a section: lavender falls from the top,
+// peach rises from the bottom. The parent needs `relative isolate`; callers
+// set the height (e.g. `h-[60%]`).
+const glowTone = {
+  lavender: "top-0 bg-(image:--db-glow-lavender)",
+  peach: "bottom-0 bg-(image:--db-glow-peach)",
+};
+
+export const Glow = ({
+  tone,
+  className,
+}: {
+  tone: keyof typeof glowTone;
+  className?: string;
+}) => {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "pointer-events-none absolute inset-x-0 -z-10",
+        glowTone[tone],
+        className,
+      )}
+    />
   );
 };
