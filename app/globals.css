@@ -121,6 +121,8 @@
     --db-border: rgba(214, 228, 255, 0.14);
     --db-accent: linear-gradient(163deg, #fbbc94 0%, #f49d70 46%, #e88654 100%);
     --db-accent-solid: #f49d70;
+    /* The accent gradient's light first stop; the brand mark's top colour. */
+    --db-accent-light: #fbbc94;
     /* Text on the accent: the page base, 8.8:1 on #f49d70. */
     --db-on-accent: #14111c;
     --db-lavender: #9c86ce;

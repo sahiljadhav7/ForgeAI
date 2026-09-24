@@ -1,9 +1,10 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import { SignUpButton, UserButton, useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import RisingSunMark from "@/components/brand/RisingSunMark";
 import { useEntrance } from "./entrance";
 import styles from "./landing.module.css";
 
@@ -12,26 +13,6 @@ const NAV_LINKS = [
   { label: "Examples", href: "#examples" },
   { label: "Pricing", href: "#pricing" },
 ];
-
-// Half-sun on a horizon line with a short reflection, peach → lavender.
-function RisingSunMark() {
-  const gradientId = useId();
-  return (
-    <svg className={styles.mark} viewBox="0 0 34 34" aria-hidden="true">
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="8" x2="0" y2="31" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FBBC94" />
-          <stop offset="1" stopColor="#9C86CE" />
-        </linearGradient>
-      </defs>
-      <g fill={`url(#${gradientId})`}>
-        <path d="M5.5 22a11.5 11.5 0 0 1 23 0Z" />
-        <rect x="2" y="24" width="30" height="2.4" rx="1.2" />
-        <rect x="9" y="28.6" width="16" height="2.1" rx="1.05" />
-      </g>
-    </svg>
-  );
-}
 
 // Nav CTA: Get Started (Clerk sign-up modal) when signed out, My projects
 // plus the avatar when signed in. Signed-out markup also covers Clerk's
@@ -89,7 +70,7 @@ export default function Nav() {
 
       <header className={cn(styles.nav, anim && styles.anim)}>
         <Link href="/" className={styles.brand} aria-label="Daybreak home">
-          <RisingSunMark />
+          <RisingSunMark className={styles.mark} />
           <span className={styles.wordmark}>Daybreak</span>
         </Link>
 
