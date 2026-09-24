@@ -17,7 +17,7 @@ export default function WorkspaceError({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-      <h2 className="font-serif text-2xl text-white/90">
+      <h2 className="font-display text-2xl text-white/90">
         We couldn&apos;t open your workspace
       </h2>
       <p className="text-sm text-white/40">

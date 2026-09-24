@@ -34,7 +34,7 @@ export default async function ProjectsPage() {
   const projects = await getUserProjects();
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] px-4 py-10">
+    <div className="min-h-screen bg-[#0a0a0a] px-4 py-10">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -57,6 +57,6 @@ export default async function ProjectsPage() {
           <ProjectCard projects={projects} />
         )}
       </div>
-    </main>
+    </div>
   );
 }

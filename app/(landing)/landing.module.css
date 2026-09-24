@@ -1,0 +1,982 @@
+/*
+ * Landing hero, ported from design.md (the pixel reference) with the spec's
+ * overrides. Desktop is a 1560x1008 reference frame where 1 --u = 1 reference
+ * px, so the whole composition scales as one block. Tablet and compact
+ * switch to fluid px layouts (--u: 1px).
+ */
+
+.root {
+  --u: min(0.06410256vw, 0.12400794vh);
+  --vu: 0.09920635vh;
+  --inset-top: 41;
+  --inset-bottom: 106;
+
+  /* Nav */
+  --brand-x: 225;
+  --mark: 34;
+  --brand-gap: 12;
+  --brand-fs: 18.49;
+  --links-top: 9.5; /* links-y 50.5 − inset-top 41 */
+  --links-gap: 50;
+  --links-fs: 21.69;
+  --cta-w: 140;
+  --cta-h: 43;
+  --cta-r: 12;
+  --cta-fs: 15.7;
+  --cta-dy: 2;
+  --nav-h: 43;
+
+  /* Hero */
+  --hero-gap: 51;
+  --h1-fs: 36.25;
+  --display-ls: 0.0018em;
+  --nav-ls: -0.0115em;
+  --brand-ls: -0.0154em;
+  --cta-ls: -0.0127em;
+  --body-ls: 0.007em;
+  --proof-ls: 0.0065em;
+  --w-regular: 400;
+  --w-display: 410;
+  --w-medium: 500;
+  --w-cta: 520;
+  --w-proof: 480;
+
+  /* Composer (card-relative: card is at frame x=425, y=413) */
+  --card-w: 708;
+  --card-h: 143;
+  --card-r: 26;
+  --ph-x: 27; /* 452 − 425 */
+  --ph-y: 33; /* 446 − 413 */
+  --ph-fs: 9.97;
+  --tools-x: 19; /* 444 − 425 */
+  --tools-bottom: 21; /* card-h 143 − tools-y 92 − chip-h 30 */
+  --chip-h: 30;
+  --chip-r: 9;
+  --chip-fs: 9;
+  --chip-gap: 5.5;
+  --send-x: 640; /* 1084 − 444, relative to .tools */
+  --send-y: 2; /* 507 − 505 */
+  --send-d: 35;
+
+  /* Footer (scroll cue in the proof slot) */
+  --by-fs: 14.01;
+  --proof-h: 103; /* frame y 799 → 902: caption + gap + logo row */
+
+  --e-primary: cubic-bezier(0.16, 1, 0.3, 1);
+  /* design.md's soft curve; the value lives in the palette (globals.css) so
+     the scroll reveal and the hero share it. */
+  --e-soft: var(--db-ease);
+
+  --font-text:
+    var(--font-inter), Inter, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-display: var(--font-text);
+
+  /* Frame padding, shared by the hero frame and the nav laid over it. */
+  --pad-top: calc(var(--inset-top) * var(--vu));
+  --pad-right: calc(var(--brand-x) * var(--u));
+  --pad-bottom: calc(var(--inset-bottom) * var(--vu));
+  --pad-left: calc(var(--brand-x) * var(--u));
+
+  position: relative;
+  font-family: var(--font-text);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
+@supports (height: 100dvh) {
+  .root {
+    --u: min(0.06410256vw, 0.12400794dvh);
+    --vu: 0.09920635dvh;
+  }
+}
+
+@media (min-width: 1561px) {
+  .root {
+    --inset-top: 27;
+    --inset-bottom: 74;
+  }
+}
+
+/* Anchor links (#features, #how-it-works, …) scroll smoothly on this page
+   only. scroll-behavior has to sit on the scrolling element, <html>. */
+:global(html):has(.root) {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(html):has(.root) {
+    scroll-behavior: auto;
+  }
+}
+
+/* ───────── Stage ───────── */
+
+.stage {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #0a0d12;
+  color: #fff;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Fades the video into the page base below the hero (--db-base). Eased
+   stops so the join doesn't show a hard band. */
+.fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(150 * var(--vu));
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 17, 28, 0) 0%,
+    rgba(20, 17, 28, 0.08) 22%,
+    rgba(20, 17, 28, 0.3) 48%,
+    rgba(20, 17, 28, 0.68) 76%,
+    var(--db-base) 100%
+  );
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad-top) var(--pad-right) var(--pad-bottom) var(--pad-left);
+}
+
+/* ───────── Nav ───────── */
+
+/* The burger's checkbox. Hidden (and out of the tab order) until the
+   compact layout shows the burger; there it's visually hidden instead. */
+.menuToggle {
+  display: none;
+}
+
+/* The header lives outside <main> (banner landmark), so it's laid over the
+   stage at the frame's padding instead of being the frame's first row. */
+.nav {
+  position: absolute;
+  top: var(--pad-top);
+  left: var(--pad-left);
+  right: var(--pad-right);
+  z-index: 2;
+  height: calc(var(--nav-h) * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--brand-gap) * var(--u));
+  color: #fff;
+}
+
+.mark {
+  display: block;
+  flex: none;
+  width: calc(var(--mark) * var(--u));
+  height: calc(var(--mark) * var(--u));
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 32;
+  font-size: calc(var(--brand-fs) * var(--u));
+  font-weight: var(--w-medium);
+  letter-spacing: var(--brand-ls);
+  line-height: 1;
+  transform: translateY(calc(1 * var(--u)));
+  text-shadow: 0 calc(1 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.3);
+}
+
+.links {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--links-top) * var(--u));
+  transform: translateX(-50%);
+  display: flex;
+  gap: calc(var(--links-gap) * var(--u));
+}
+
+.link {
+  color: #fff;
+  font-size: calc(var(--links-fs) * var(--u));
+  font-weight: var(--w-regular);
+  letter-spacing: var(--nav-ls);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 calc(1 * var(--u)) calc(12 * var(--u)) rgba(0, 0, 0, 0.32);
+  transition: opacity 0.18s ease;
+}
+
+.link:hover {
+  opacity: 0.72;
+}
+
+.navRight {
+  align-self: flex-start;
+  margin-top: calc(1 * var(--u)); /* cta-y 42 − inset-top 41 */
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--cta-w) * var(--u));
+  height: calc(var(--cta-h) * var(--u));
+  border-radius: calc(var(--cta-r) * var(--u));
+  color: #fff;
+  font-size: calc(var(--cta-fs) * var(--u));
+  font-weight: var(--w-cta);
+  letter-spacing: var(--cta-ls);
+  line-height: 1;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #3d3d3f 0%, #1d1d20 100%);
+  box-shadow:
+    inset 0 calc(1 * var(--u)) 0 rgba(255, 255, 255, 0.1),
+    0 calc(2 * var(--u)) calc(14 * var(--u)) rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition:
+    filter 0.18s ease,
+    transform 0.18s ease;
+}
+
+.cta > span {
+  transform: translateY(calc(var(--cta-dy) * var(--u)));
+}
+
+.cta:hover {
+  filter: brightness(1.16);
+}
+
+.cta:active {
+  transform: translateY(1px);
+}
+
+.avatar {
+  width: calc(36 * var(--u));
+  height: calc(36 * var(--u));
+}
+
+.burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+}
+
+.burger svg {
+  width: 17px;
+  height: 12px;
+}
+
+.sheet {
+  display: none;
+}
+
+.sheetInner {
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transition: visibility 0s linear 0.32s;
+}
+
+.menuToggle:checked ~ .nav .sheetInner {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(24, 24, 27, 0.86);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.sheetLink {
+  padding: 11px 12px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.sheetLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sheetAuth {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.sheetCta {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 11px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: var(--w-cta);
+  letter-spacing: var(--cta-ls);
+  background: linear-gradient(180deg, #3d3d3f 0%, #1d1d20 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+/* ───────── Hero ───────── */
+
+/* Holds the nav's row in the frame, so the hero lays out as in design.md. */
+.navSpace {
+  flex: none;
+  height: calc(var(--nav-h) * var(--u));
+}
+
+.hero {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--hero-gap) * var(--vu));
+  padding-bottom: calc(4 * var(--vu));
+}
+
+.h1 {
+  color: #fff;
+  text-align: center;
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 32;
+  font-size: calc(var(--h1-fs) * var(--u));
+  font-weight: var(--w-display);
+  line-height: 1.1;
+  letter-spacing: var(--display-ls);
+  text-shadow: 0 calc(2 * var(--u)) calc(22 * var(--u)) rgba(0, 0, 0, 0.3);
+}
+
+/* ───────── Composer card ───────── */
+
+/* --grow is how far the textarea has grown past one line (set by
+   Composer). The card grows downward by that much; the negative margin keeps
+   its layout box the base size so the centered hero doesn't shift. */
+.card {
+  position: relative;
+  flex: none;
+  width: calc(var(--card-w) * var(--u));
+  height: calc(var(--card-h) * var(--u) + var(--grow, 0px));
+  margin-right: calc(3 * var(--u));
+  margin-bottom: calc(-1 * var(--grow, 0px));
+  border-radius: calc(var(--card-r) * var(--u));
+  background: rgba(41, 41, 43, 0.955);
+  -webkit-backdrop-filter: blur(calc(26 * var(--u))) saturate(112%);
+  backdrop-filter: blur(calc(26 * var(--u))) saturate(112%);
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 228, 255, 0.14),
+    0 calc(22 * var(--u)) calc(60 * var(--u)) rgba(0, 0, 0, 0.3);
+}
+
+/* The textarea sits where design.md's placeholder <p> sits, one line tall
+   when empty. Composer sets its height from scrollHeight; max-height caps
+   the card at about 2x its base height (one line + card-h), then it scrolls. */
+.ph {
+  position: absolute;
+  left: calc(var(--ph-x) * var(--u));
+  top: calc(var(--ph-y) * var(--u));
+  right: calc(24 * var(--u));
+  display: block;
+  height: 1.35em;
+  max-height: calc(1.35em + var(--card-h) * var(--u));
+  padding: 0;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  color: rgba(255, 255, 255, 0.92);
+  caret-color: var(--db-accent-solid);
+  font-size: calc(var(--ph-fs) * var(--u));
+  font-weight: var(--w-regular);
+  line-height: 1.35;
+  letter-spacing: var(--body-ls);
+}
+
+.ph::placeholder {
+  color: #8b8c8e;
+  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Pinned to the card's bottom edge so it rides down as the card grows. */
+.tools {
+  position: absolute;
+  left: calc(var(--tools-x) * var(--u));
+  bottom: calc(var(--tools-bottom) * var(--u));
+  /* card right edge (425 + 708) minus the toolbar's measured right (1134): −1u */
+  right: calc((425 + 708 - 1134) * var(--u));
+  height: calc(var(--chip-h) * var(--u));
+  display: flex;
+  align-items: center;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--chip-gap) * var(--u));
+}
+
+/* Auto-width chips: --pl (label offset) and --ig (icon gap) per design.md,
+   and a fixed right padding in place of the old fixed --cw widths. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--ig) * var(--u));
+  height: calc(var(--chip-h) * var(--u));
+  padding: 0 calc(13 * var(--u)) 0 calc(var(--pl) * var(--u));
+  border-radius: calc(var(--chip-r) * var(--u));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.088) 0%,
+    rgba(255, 255, 255, 0.05) 45%,
+    rgba(255, 255, 255, 0.038) 100%
+  );
+  color: #909093;
+  font-size: calc(var(--chip-fs) * var(--u));
+  font-weight: var(--w-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.chip:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.07)
+  );
+  color: #c8c8cb;
+}
+
+.chip svg {
+  display: block;
+  flex: none;
+  width: calc(var(--iw) * var(--u));
+  height: auto;
+}
+
+.chip > span {
+  transform: translateY(calc(2 * var(--u)));
+}
+
+/* Desktop: absolutely placed right cluster, not a flex-centered group. */
+.right {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.right > * {
+  position: absolute;
+  pointer-events: auto;
+}
+
+.send {
+  left: calc(var(--send-x) * var(--u));
+  top: calc(var(--send-y) * var(--u));
+  width: calc(var(--send-d) * var(--u));
+  height: calc(var(--send-d) * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--db-accent);
+  box-shadow: 0 calc(3 * var(--u)) calc(12 * var(--u)) rgba(210, 110, 60, 0.34);
+  cursor: pointer;
+  transition:
+    filter 0.18s ease,
+    transform 0.18s ease;
+}
+
+.send svg {
+  display: block;
+  width: calc(11.66 * var(--u));
+  height: auto;
+}
+
+/* Disabled (empty prompt) keeps the design.md look, so the empty state
+   stays pixel-exact; it just stops reacting. */
+.send:disabled {
+  cursor: default;
+}
+
+.send:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+
+.send:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+/* ───────── Scroll cue (footer.proof slot) ───────── */
+
+/* Keeps design.md's footer height so the headline and card stay where the
+   reference frame puts them now that the logo row is gone. */
+.proof {
+  flex: none;
+  min-height: calc(var(--proof-h) * var(--vu));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cue {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(9 * var(--u));
+  color: rgba(255, 255, 255, 0.95);
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 32;
+  font-size: calc(var(--by-fs) * var(--u));
+  font-weight: var(--w-proof);
+  letter-spacing: var(--proof-ls);
+  line-height: 1.2;
+  text-shadow: 0 calc(1 * var(--u)) calc(12 * var(--u)) rgba(0, 0, 0, 0.35);
+  transition: opacity 0.18s ease;
+}
+
+.cue:hover {
+  opacity: 0.72;
+}
+
+.cue svg {
+  display: block;
+  width: calc(13 * var(--u));
+  height: auto;
+  filter: drop-shadow(0 calc(1 * var(--u)) calc(10 * var(--u)) rgba(0, 0, 0, 0.3));
+}
+
+/* ───────── Focus ───────── */
+
+/* design.md's ring, at zero specificity: controls with their own shape
+   (send circle, chips, CTA) keep their radius, the rest get 4px. */
+:where(.nav, .stage) :where(:focus-visible) {
+  outline: 2px solid #f8b285;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.menuToggle:focus-visible ~ .nav .burger {
+  outline: 2px solid #f8b285;
+  outline-offset: 3px;
+}
+
+/* ───────── Tablet ───────── */
+
+@media (min-width: 600px) and (max-width: 1180px) and (min-height: 600px) {
+  .root {
+    --u: 1px;
+    --pad-top: clamp(24px, 3.4vh, 44px);
+    --pad-right: clamp(28px, 4.2vw, 60px);
+    --pad-bottom: clamp(26px, 4.4vh, 56px);
+    --pad-left: clamp(28px, 4.2vw, 60px);
+  }
+
+  .h1 {
+    font-size: clamp(27px, 4.3vw, 44px);
+    line-height: 1.12;
+  }
+
+  .card {
+    width: min(100%, clamp(516px, 74vw, 760px));
+    height: auto;
+    margin-right: 0;
+    padding: clamp(15px, 1.9vw, 24px);
+    border-radius: clamp(17px, 2.1vw, 26px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3.2vh, 44px);
+  }
+
+  .ph {
+    position: static;
+    font-size: clamp(11px, 1.35vw, 14px);
+    line-height: 1.4;
+    height: 1.4em;
+    max-height: 9.8em; /* 7 lines, about 2x the base card */
+  }
+
+  .tools {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(10px, 1.4vw, 18px);
+  }
+
+  .chips {
+    flex-wrap: nowrap;
+    gap: clamp(6px, 0.85vw, 10px);
+  }
+
+  .chip {
+    height: clamp(29px, 3.4vh, 34px);
+    padding: 0 clamp(7px, 1vw, 13px);
+    font-size: clamp(9.6px, 1.12vw, 12.5px);
+  }
+
+  .right {
+    position: static;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    gap: 0;
+  }
+
+  .right > * {
+    position: static;
+  }
+
+  .send {
+    margin-left: clamp(9px, 1.3vw, 18px);
+    width: clamp(32px, 3.5vw, 38px);
+    height: clamp(32px, 3.5vw, 38px);
+  }
+
+  .proof {
+    min-height: 0;
+    gap: clamp(15px, 2.5vh, 30px);
+  }
+}
+
+/* ───────── Compact (phone, and short landscape) ───────── */
+
+@media (max-width: 599px), (max-height: 599px) and (max-width: 1180px) {
+  .root {
+    --u: 1px;
+    --pad-top: max(18px, env(safe-area-inset-top));
+    --pad-right: max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-right));
+    --pad-bottom: max(20px, env(safe-area-inset-bottom));
+    --pad-left: max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-left));
+  }
+
+  .links,
+  .navRight {
+    display: none;
+  }
+
+  .burger {
+    display: inline-flex;
+  }
+
+  .menuToggle {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sheet {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .menuToggle:checked ~ .nav .sheet {
+    grid-template-rows: 1fr;
+  }
+
+  .mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .h1 {
+    width: 100%;
+    max-width: 15ch;
+    font-size: clamp(29px, 7.6vw, 50px);
+    line-height: 1.14;
+    letter-spacing: -0.012em;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin-right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 4.6vh, 34px);
+    padding: clamp(13px, 3.4vw, 18px);
+  }
+
+  .ph {
+    position: static;
+    font-size: clamp(9.4px, 2.95vw, 14px);
+    max-height: 16.2em; /* 12 lines, about 1.9x the base card */
+  }
+
+  .tools {
+    position: static;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .chips {
+    flex-wrap: wrap;
+  }
+
+  .right {
+    position: static;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .right > * {
+    position: static;
+  }
+
+  .send {
+    margin-left: auto;
+    width: 40px;
+    height: 40px;
+  }
+
+  .proof {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1180px) and (max-height: 560px) {
+  .hero {
+    gap: 16px;
+  }
+
+  .h1 {
+    font-size: clamp(24px, 5.4vh, 34px);
+  }
+
+  /* No room for 2x here: 4 lines keeps the grown card above the cue and
+     inside the stage. */
+  .ph {
+    max-height: 5.4em;
+  }
+
+  .proof {
+    gap: 10px;
+    padding-top: 10px;
+  }
+}
+
+/* ───────── Entrance (once on first paint) ───────── */
+
+@keyframes e-settle-down {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-5 * var(--u)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes e-settle-up {
+  from {
+    opacity: 0;
+    transform: translateY(calc(6 * var(--u)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes e-mark {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes e-focus {
+  from {
+    opacity: 0;
+    transform: translateY(calc(14 * var(--u)));
+    filter: blur(calc(6 * var(--u)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes e-panel {
+  from {
+    opacity: 0;
+    transform: translateY(calc(18 * var(--u))) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes e-populate {
+  from {
+    opacity: 0;
+    transform: translateY(calc(4 * var(--u)));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes e-send {
+  from {
+    transform: scale(0.82);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .anim .brand {
+    animation: e-settle-down 0.58s var(--e-soft) 0.06s both;
+  }
+
+  .anim .mark {
+    animation: e-mark 0.62s var(--e-primary) 0.06s both;
+  }
+
+  .anim .link {
+    animation: e-settle-down 0.5s var(--e-soft) 0.16s both;
+  }
+
+  .anim .link:nth-child(2) {
+    animation-delay: 0.21s;
+  }
+
+  .anim .link:nth-child(3) {
+    animation-delay: 0.26s;
+  }
+
+  /* The burger takes the Get Started slot on compact layouts. */
+  .anim .navRight,
+  .anim .burger {
+    animation: e-settle-down 0.55s var(--e-soft) 0.34s both;
+  }
+
+  .anim .h1 {
+    will-change: transform, opacity;
+    animation: e-focus 1s var(--e-primary) 0.3s both;
+  }
+
+  .anim .card {
+    will-change: transform, opacity;
+    animation: e-panel 0.9s var(--e-primary) 0.62s both;
+  }
+
+  .anim .ph {
+    animation: e-populate 0.5s var(--e-soft) 0.88s both;
+  }
+
+  .anim .chips {
+    animation: e-populate 0.5s var(--e-soft) 0.94s both;
+  }
+
+  .anim .right {
+    animation: e-populate 0.5s var(--e-soft) 1s both;
+  }
+
+  .anim .send {
+    animation: e-send 0.5s var(--e-primary) 1s both;
+  }
+
+  .anim .cue {
+    animation: e-settle-up 0.55s var(--e-soft) 1.08s both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav *,
+  .nav *::before,
+  .nav *::after,
+  .stage *,
+  .stage *::before,
+  .stage *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+
+  /* Auto-grow reads the textarea's height back straight after setting it.
+     With the forced duration above, the default transition-property (all)
+     would make that read return the old height, so opt these out. */
+  .stage .card,
+  .stage .ph {
+    transition: none !important;
+  }
+}

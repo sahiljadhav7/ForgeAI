@@ -228,7 +228,7 @@ const ChatPanel = ({
                   <div className="flex items-start gap-2">
                     <Image
                       src="/logo-short.jpeg"
-                      alt="Forge"
+                      alt="Daybreak"
                       width={24}
                       height={24}
                       className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
@@ -275,7 +275,7 @@ const ChatPanel = ({
             <div className="flex items-start gap-2">
               <Image
                 src="/logo-short.jpeg"
-                alt="forge"
+                alt="Daybreak"
                 width={24}
                 height={24}
                 className="mt-0.5 h-6 w-6 shrink-0 rounded-md"

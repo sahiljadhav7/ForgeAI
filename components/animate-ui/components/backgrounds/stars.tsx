@@ -40,6 +40,9 @@ function StarLayer({
   const [boxShadow, setBoxShadow] = React.useState<string>('');
 
   React.useEffect(() => {
+    // Random positions are generated only on the client, after hydration, so
+    // server and client markup match.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBoxShadow(generateStars(count, starColor));
   }, [count, starColor]);
 
