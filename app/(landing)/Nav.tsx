@@ -14,8 +14,8 @@ const NAV_LINKS = [
   { label: "Pricing", href: "#pricing" },
 ];
 
-// Nav CTA: Get Started (Clerk sign-up modal) when signed out, My projects
-// plus the avatar when signed in. My projects is a plain nav link like
+// Nav CTA: Get Started (Clerk sign-up modal) when signed out, Projects
+// plus the avatar when signed in. Projects is a plain nav link like
 // Features/Examples/Pricing; only Get Started is a pill. Signed-out markup
 // also covers Clerk's loading state, so the CTA is in place on first paint.
 function AuthActions({
@@ -32,7 +32,7 @@ function AuthActions({
     return (
       <>
         <Link href="/projects" className={linkClassName} onClick={onNavigate}>
-          My projects
+          Projects
         </Link>
         <UserButton appearance={{ elements: { avatarBox: styles.avatar } }} />
       </>
