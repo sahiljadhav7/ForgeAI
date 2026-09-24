@@ -1,73 +1,98 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Zap } from "lucide-react";
-import {
-  SignUpButton,
-  UserButton,
-  SignInButton,
-} from "@clerk/nextjs";
+import { Zap } from "lucide-react";
+import { SignUpButton, UserButton, SignInButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { Button } from "./ui/button";
 import PricingModal from "./PricingModal";
+import RisingSunMark from "./brand/RisingSunMark";
 import { checkUser } from "@/lib/checkUser";
+import { cn } from "@/lib/utils";
+import {
+  accentPillClass,
+  focusRingWithinClass,
+  secondaryPillClass,
+} from "./reusable";
 
+// The app-wide header: the landing nav's sibling in the Daybreak palette.
+// Height stays 64px (h-16) so pages' mt-16 offsets keep working.
 const Header = async () => {
   const { userId } = await auth();
   const user = await checkUser();
 
   return (
-    <header className="w-full fixed top-0 left-0 z-50 h-16 border-b border-white/6 bg-white/7 backdrop-blur-md">
-      <nav className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link href="/">
-          <Image
-            src={"/logo.png"}
-            alt="Logo"
-            width={100}
-            height={100}
-            loading="eager"
-            className="h-9 w-auto rounded-md"
-          />
+    <header className="fixed top-0 left-0 z-50 h-16 w-full border-b border-db-border bg-db-surface/70 backdrop-blur-md">
+      {/* One focus ring for every control in the bar, including the ones
+          Clerk and PricingModal render (see focusRingWithinClass). */}
+      <nav
+        className={cn(
+          "mx-auto flex h-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6",
+          focusRingWithinClass,
+        )}
+      >
+        <Link
+          href="/"
+          aria-label="Daybreak home"
+          className="inline-flex shrink-0 items-center gap-3 text-db-text"
+        >
+          <RisingSunMark className="block size-8 flex-none" />
+          <span
+            className={cn(
+              "text-[18.5px] leading-none font-medium [font-variation-settings:'opsz'_32] tracking-[-0.0154em]",
+              // Signed in, phones drop the wordmark so Projects, credits and
+              // the avatar fit at 360px; the link keeps its aria-label.
+              userId && "hidden sm:inline",
+            )}
+          >
+            Daybreak
+          </span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           {userId ? (
             <>
               <Link
                 href={"/projects"}
-                className="text-13px font-medium text-white/40 transition-colors hover:text-whtite/80"
+                className="text-sm font-medium text-db-muted transition-[color] hover:text-db-text"
               >
                 Projects
               </Link>
 
               {user && (
                 <PricingModal>
-                  <span className="inline-flex h-8 items-center gap=1.5 rounded-full border border-white/10 bg-white/5 px-3 text-white/70 text-13px font-medium">
-                    <Zap className="h-3 w-3 fill-white/70" /> {user.credits}
-                    credits
+                  <span
+                    className={cn(
+                      secondaryPillClass,
+                      "inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium whitespace-nowrap",
+                    )}
+                  >
+                    <Zap className="size-3 fill-db-accent text-db-accent" />
+                    {user.credits} credits
                   </span>
                 </PricingModal>
               )}
 
-              <UserButton />
+              <UserButton appearance={{ elements: { avatarBox: "size-9" } }} />
             </>
           ) : (
             <>
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm" className={"*:text-white/40"}>
-                  Sign In
-                </Button>
+                <button
+                  type="button"
+                  className="text-sm font-medium whitespace-nowrap text-db-muted transition-[color] hover:text-db-text"
+                >
+                  Sign in
+                </button>
               </SignInButton>
               <SignUpButton mode="modal">
-                <Button
+                <button
                   type="button"
-                  className={
-                    "h-8 rounded-full font-semibold active:scale-95 px-4 pt-0.5"
-                  }
+                  className={cn(
+                    accentPillClass,
+                    "inline-flex h-9 items-center px-4 text-[13px] font-semibold whitespace-nowrap",
+                  )}
                 >
-                  Get started
-                  <ArrowRight className=" h-3 w-3 opacity-60" />
-                </Button>
+                  Get Started
+                </button>
               </SignUpButton>
             </>
           )}

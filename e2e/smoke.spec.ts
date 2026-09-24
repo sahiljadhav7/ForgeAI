@@ -1,4 +1,6 @@
+import { clerk } from "@clerk/testing/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { signedInOptIn } from "./signed-in";
 
 // Signed-out smoke tests for the pages a visitor can reach without an
 // account. Anything that would call Gemini is blocked so a run can never
@@ -11,6 +13,10 @@ function trackPageErrors(page: Page) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   return errors;
+}
+
+function horizontalOverflow(page: Page) {
+  return page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 }
 
 // Clerk's modals exist only once clerk-js has loaded. Before that, submit
@@ -45,10 +51,7 @@ test.describe("landing page", () => {
 
   test("has no horizontal scroll", async ({ page }) => {
     await page.goto("/");
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth,
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
+    expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   });
 
   test("send is disabled until the prompt has text", async ({ page }) => {
@@ -139,11 +142,32 @@ test.describe("other routes", () => {
   test("unknown URLs render the 404 page with the header and one title", async ({ page }) => {
     const response = await page.goto("/does-not-exist");
     expect(response?.status()).toBe(404);
-    await expect(page.getByText("This page could not be found.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "This page doesn't exist" })).toBeVisible();
     await expect(page.getByRole("banner")).toHaveCount(1);
     await expect(page.locator("main")).toHaveCount(1);
     await expect(page.locator("title")).toHaveCount(1);
   });
+
+  test("the 404 page has the Daybreak brand and a Back home link", async ({ page }) => {
+    await page.goto("/does-not-exist");
+    await expect(page.getByRole("banner").getByRole("link", { name: "Daybreak home" })).toHaveAttribute("href", "/");
+    await expect(page.getByRole("main").getByRole("link", { name: "Back home" })).toHaveAttribute("href", "/");
+  });
+
+  test("sign-in has the Daybreak brand", async ({ page }) => {
+    await page.goto("/sign-in");
+    await expect(page.getByRole("banner").getByRole("link", { name: "Daybreak home" })).toHaveAttribute("href", "/");
+  });
+
+  for (const path of ["/sign-in", "/sign-up", "/does-not-exist"]) {
+    test(`${path} has no horizontal scroll`, async ({ page }) => {
+      const errors = trackPageErrors(page);
+      await page.goto(path);
+      await expect(page.getByRole("banner")).toHaveCount(1);
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+      expect(errors).toEqual([]);
+    });
+  }
 
   test("sign-in and sign-up pages render Clerk with the header", async ({ page }) => {
     for (const [path, root] of [["/sign-in", ".cl-signIn-root"], ["/sign-up", ".cl-signUp-root"]]) {
@@ -166,6 +190,38 @@ test.describe("other routes", () => {
       const location = new URL(response.headers()["location"], baseURL);
       expect(location.pathname).toContain("sign-in");
       expect(location.searchParams.get("redirect_url")).toContain(path);
+    });
+  }
+});
+
+// Signed in, /projects and /workspace read and write the database, so these
+// are local only: see e2e/signed-in.ts for why and how to run them.
+test.describe("signed in @signed-in", () => {
+  test.skip(!signedInOptIn, "local only, against a non-production database (e2e/signed-in.ts)");
+
+  test.beforeEach(async ({ page }) => {
+    // Loads a page with Clerk, then signs in with the testing token (from
+    // clerkSetup in e2e/global-setup.ts), so no bot protection gets in the way.
+    await page.goto("/sign-in");
+    await clerk.signIn({
+      page,
+      signInParams: {
+        strategy: "password",
+        identifier: process.env.E2E_CLERK_USER_USERNAME!,
+        password: process.env.E2E_CLERK_USER_PASSWORD!,
+      },
+    });
+  });
+
+  for (const path of ["/projects", "/workspace"]) {
+    test(`${path} renders with the header and one main`, async ({ page }) => {
+      const errors = trackPageErrors(page);
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.getByRole("banner").getByRole("link", { name: "Daybreak home" })).toBeVisible();
+      await expect(page.locator("main")).toHaveCount(1);
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
+      expect(errors).toEqual([]);
     });
   }
 });

@@ -11,7 +11,6 @@ import {
   SandpackFileExplorer,
   useSandpack,
 } from "@codesandbox/sandpack-react";
-import { dracula } from "@codesandbox/sandpack-themes";
 import {
   Eye,
   Code2,
@@ -23,9 +22,17 @@ import {
 } from "lucide-react";
 import { RingLoader } from "react-spinners";
 import JSZip from "jszip";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PricingModal from "@/components/PricingModal";
+import {
+  accentPillClass,
+  focusRingClass,
+  focusRingWithinClass,
+  secondaryPillClass,
+} from "@/components/reusable";
+import { cn } from "@/lib/utils";
+import { daybreakSandpackTheme } from "@/lib/sandpack-theme";
+import { DB_LITERALS } from "@/lib/daybreak-literals";
 import type { FileData, StatusStep } from "@/types/workspace";
 import {
   EXPORT_README,
@@ -34,6 +41,8 @@ import {
 } from "@/lib/exportZip";
 
 // ─── Placeholder ──────────────────────────────────────────────────────────────
+// Runs inside the preview iframe, where the .daybreak tokens don't exist, so
+// it takes the Sandpack theme's literals.
 
 const PLACEHOLDER_FILES = {
   "/App.js": {
@@ -41,13 +50,13 @@ const PLACEHOLDER_FILES = {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#0a0a0a",
+      background: "${DB_LITERALS.base}",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontFamily: "system-ui, sans-serif",
     }}>
-      <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)" }}>
+      <div style={{ textAlign: "center", color: "${DB_LITERALS.muted}" }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>⚡</div>
         <p style={{ fontSize: 14 }}>Your app will appear here</p>
       </div>
@@ -96,6 +105,29 @@ interface CodePanelProps {
   isImproving: boolean;
   isProUser: boolean;
 }
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+// Line tabs: muted when inactive, warm white with a peach underline when
+// active. The underline sits on the bar's bottom border; it is positioned
+// here because shadcn's `group-data-horizontal` variants never match Base
+// UI's `data-orientation`. The focus ring (from TabsTrigger) is inset, since
+// the tab fills the bar's height and an outset ring would be clipped by the
+// global header.
+const tabTriggerClass =
+  "h-full px-3 text-db-muted hover:text-db-text data-active:text-db-text after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-db-accent focus-visible:-outline-offset-2";
+
+// "Improve with Agent": a lavender→peach wash with a lavender edge.
+const improveClass =
+  "group relative inline-flex h-8 items-center gap-1.5 overflow-hidden rounded-full border border-db-lavender/35 bg-linear-to-r from-db-lavender/12 to-db-accent/12 px-3 text-[13px] font-medium text-db-text transition-colors hover:border-db-accent/50 hover:from-db-lavender/20 hover:to-db-accent/20";
+
+// A light band sweeping across the Improve button. It waits off to the left
+// (clipped) when the user prefers reduced motion.
+const shimmerClass =
+  "pointer-events-none absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-db-text/10 to-transparent motion-safe:animate-[shimmer_2.5s_infinite]";
+
+const proBadgeClass =
+  "rounded-full bg-db-accent px-1.5 py-0.5 text-[10px] font-semibold leading-none text-db-on-accent";
 
 // ─── SandpackInner ────────────────────────────────────────────────────────────
 // Lives inside SandpackProvider so it can call useSandpack().
@@ -274,16 +306,16 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
       className="flex h-full flex-col gap-0"
     >
       {/* Tabs + Actions bar */}
-      <div className="flex items-center justify-between border-b border-white/6 px-2">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-db-border bg-db-surface px-2">
         <TabsList
           variant="line"
-          className="h-auto gap-0 rounded-none bg-transparent p-0"
+          className="h-full gap-0 rounded-none bg-transparent p-0"
         >
-          <TabsTrigger className="border-b-2 pt-2" value="code">
+          <TabsTrigger className={tabTriggerClass} value="code">
             <Code2 className="h-3.5 w-3.5" />
             Code
           </TabsTrigger>
-          <TabsTrigger className="border-b-2 pt-2" value="preview">
+          <TabsTrigger className={tabTriggerClass} value="preview">
             <Eye className="h-3.5 w-3.5" />
             Preview
           </TabsTrigger>
@@ -295,9 +327,10 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
             showImproveInput ? (
               <div className="flex items-center gap-1.5">
                 <div className="relative flex items-center">
-                  <Bot className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-violet-400" />
+                  <Bot className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-db-accent" />
                   <input
                     autoFocus
+                    aria-label="What should I improve?"
                     value={improveInput}
                     onChange={(e) => setImproveInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -308,18 +341,25 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
                       if (e.key === "Escape") setShowImproveInput(false);
                     }}
                     placeholder="What should I improve?"
-                    className="h-7 w-56 rounded-md border border-violet-500/30 bg-linear-to-r from-violet-500/10 via-fuchsia-500/10 to-cyan-500/10 pl-8 pr-3 text-xs text-white/80 placeholder:text-white/30 focus:border-violet-400/50 focus:outline-none focus:shadow-[0_0_10px_rgba(139,92,246,0.2)]"
+                    className={cn(
+                      "h-8 w-56 rounded-full border border-db-lavender/35 bg-linear-to-r from-db-lavender/10 to-db-accent/10 pl-8 pr-3 text-[13px] text-db-text transition-colors placeholder:text-db-muted focus:border-db-accent/60",
+                      focusRingClass,
+                    )}
                   />
                 </div>
                 <button
                   onClick={handleImproveSubmit}
                   disabled={!improveInput.trim() || isImproving}
-                  className="group relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-md border border-violet-500/30 bg-linear-to-br from-violet-500/20 to-fuchsia-500/20 text-violet-300 transition-all duration-200 hover:border-violet-400/50 hover:from-violet-500/30 hover:to-fuchsia-500/30 hover:shadow-[0_0_10px_rgba(139,92,246,0.3)] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Send improvement"
+                  className={cn(
+                    accentPillClass,
+                    "flex size-8 items-center justify-center disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
                 >
                   {isImproving ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <ArrowUp className="h-3 w-3" />
+                    <ArrowUp className="h-3.5 w-3.5" />
                   )}
                 </button>
               </div>
@@ -327,43 +367,44 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
               <button
                 onClick={() => setShowImproveInput(true)}
                 disabled={isImproving || !fileData}
-                className="group relative flex h-7 cursor-pointer items-center gap-1.5 overflow-hidden rounded-md border border-white/10 bg-linear-to-r from-violet-500/10 via-fuchsia-500/10 to-cyan-500/10 px-2.5 text-xs font-medium transition-all duration-300 hover:border-white/20 hover:from-violet-500/20 hover:via-fuchsia-500/20 hover:to-cyan-500/20 hover:shadow-[0_0_12px_rgba(139,92,246,0.3)] disabled:cursor-not-allowed disabled:opacity-40"
+                className={cn(
+                  improveClass,
+                  "cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+                  focusRingClass,
+                )}
               >
-                <span className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
+                <span className={shimmerClass} />
                 {isImproving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-db-accent" />
                 ) : (
-                  <Bot className="h-3.5 w-3.5 text-violet-400 transition-colors group-hover:text-violet-300" />
+                  <Bot className="h-3.5 w-3.5 text-db-accent" />
                 )}
-                <span className="bg-linear-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
-                  {isImproving ? "Improving…" : "Improve with Agent"}
-                </span>
-                {!isImproving && (
-                  <span className="rounded-sm bg-violet-500/30 px-1 py-0.5 text-[10px] font-semibold leading-none text-violet-300">
-                    PRO
-                  </span>
-                )}
+                {isImproving ? "Improving…" : "Improve with Agent"}
+                {!isImproving && <span className={proBadgeClass}>PRO</span>}
               </button>
             )
           ) : (
-            <PricingModal reason="upgrade">
-              <span className="group relative flex h-7 cursor-pointer items-center gap-1.5 overflow-hidden rounded-md border border-white/10 bg-linear-to-r from-violet-500/10 via-fuchsia-500/10 to-cyan-500/10 px-2.5 text-xs font-medium text-white/60 transition-all duration-300 hover:border-white/20 hover:from-violet-500/20 hover:via-fuchsia-500/20 hover:to-cyan-500/20 hover:text-white/90 hover:shadow-[0_0_12px_rgba(139,92,246,0.3)]">
-                <span className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_2.5s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
-                <Bot className="h-3.5 w-3.5 text-violet-400 transition-colors group-hover:text-violet-300" />
-                <span className="bg-linear-to-r from-violet-300 via-fuchsia-300 to-cyan-300 bg-clip-text text-transparent">
+            // PricingModal renders its own trigger button, so the ring is
+            // applied from the wrapper.
+            <span className={focusRingWithinClass}>
+              <PricingModal reason="upgrade">
+                <span className={improveClass}>
+                  <span className={shimmerClass} />
+                  <Bot className="h-3.5 w-3.5 text-db-accent" />
                   Improve with Agent
+                  <span className={proBadgeClass}>PRO</span>
                 </span>
-                <span className="rounded-sm bg-violet-500/30 px-1 py-0.5 text-[10px] font-semibold leading-none text-violet-300">
-                  PRO
-                </span>
-              </span>
-            </PricingModal>
+              </PricingModal>
+            </span>
           )}
 
-          <Button
-            variant="ghost"
+          <button
             onClick={handleExportZip}
             disabled={isExporting || !fileData}
+            className={cn(
+              secondaryPillClass,
+              "inline-flex h-8 cursor-pointer items-center gap-1.5 px-3 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-50",
+            )}
           >
             {isExporting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -371,20 +412,26 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
               <Download className="h-3.5 w-3.5" />
             )}
             Download
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Content area */}
       <div className="relative flex-1 overflow-hidden h-full">
         {(isGenerating || isImproving) && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-[#0a0a0a]/85 backdrop-blur-sm">
-            <RingLoader color="#60a5fa" size={64} speedMultiplier={0.8} />
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-6 bg-db-base/85 backdrop-blur-sm">
+            <RingLoader
+              color="var(--db-accent-solid)"
+              size={64}
+              speedMultiplier={0.8}
+            />
             <div className="flex flex-col items-center gap-1.5">
-              <p className="text-sm font-medium text-white/60">
+              <p className="text-sm font-medium text-db-text">
                 {isImproving ? "Improving with Cline AI…" : currentStepLabel}
               </p>
-              <p className="text-xs text-white/20">
+              {/* --db-muted drops under 4.5:1 where the overlay covers a
+                  light preview, so this line is dimmed warm white. */}
+              <p className="text-xs text-db-text-dim">
                 This usually takes 10–20 seconds
               </p>
             </div>
@@ -419,7 +466,7 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
               style={{
                 height: "90%",
                 width: "180px",
-                borderRight: "0.5px solid rgba(255,255,255,0.08)",
+                borderRight: "1px solid var(--db-border)",
               }}
             />
             <SandpackCodeEditor
@@ -439,24 +486,27 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
         !isGenerating &&
         !isImproving &&
         activeTab === "preview" && (
-          <div className="absolute inset-x-0 -bottom-3 z-20 border-t border-red-500/20 bg-red-950/99 p-4 pb-6">
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-db-danger/40 bg-db-surface-solid p-4">
             <div className="flex items-center gap-2.5">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" />
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-db-danger" />
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-red-400/80">
+                <p className="text-xs font-medium text-db-danger">
                   Preview error
                 </p>
-                <p className="break-all text-[11px] text-red-300/50">
+                <p className="break-all text-xs text-db-text-dim">
                   {previewError}
                 </p>
               </div>
-              <Button
+              <button
                 onClick={() => onFixError(previewError)}
-                variant="destructive"
+                className={cn(
+                  accentPillClass,
+                  "inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 px-3.5 text-[13px] font-medium",
+                )}
               >
-                <Bot className="h-3 w-3" />
+                <Bot className="h-3.5 w-3.5" />
                 Fix with AI
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -495,11 +545,13 @@ export function CodePanel({
   const filePathKey = Object.keys(files).sort().join("|");
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    // Relative, so the preview error bar pins to this panel's bottom edge
+    // instead of spanning the viewport over the chat column.
+    <div className="relative flex flex-1 flex-col overflow-hidden">
       <SandpackProvider
         key={filePathKey}
         template="react"
-        theme={dracula}
+        theme={daybreakSandpackTheme}
         files={files}
         customSetup={{ dependencies }}
         options={{

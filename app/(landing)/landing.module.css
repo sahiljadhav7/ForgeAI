@@ -605,13 +605,13 @@
 /* design.md's ring, at zero specificity: controls with their own shape
    (send circle, chips, CTA) keep their radius, the rest get 4px. */
 :where(.nav, .stage) :where(:focus-visible) {
-  outline: 2px solid #f8b285;
+  outline: 2px solid var(--db-ring);
   outline-offset: 3px;
   border-radius: 4px;
 }
 
 .menuToggle:focus-visible ~ .nav .burger {
-  outline: 2px solid #f8b285;
+  outline: 2px solid var(--db-ring);
   outline-offset: 3px;
 }
 

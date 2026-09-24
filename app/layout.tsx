@@ -4,7 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { daybreakAppearance } from "@/lib/clerk-appearance";
 
 // The variable class goes on <html>: globals.css defines --font-sans from
 // --font-inter on :root, which only resolves if --font-inter is set there.
@@ -32,9 +33,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={daybreakAppearance}>
       <html lang="en" className={inter.variable} suppressHydrationWarning>
-        <body className="font-sans">
+        <body className="daybreak font-sans">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"

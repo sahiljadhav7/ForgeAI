@@ -34,12 +34,17 @@
   /* Daybreak palette (defined under .daybreak below). */
   --color-db-base: var(--db-base);
   --color-db-surface: var(--db-surface);
+  --color-db-surface-solid: var(--db-surface-solid);
+  --color-db-surface-raised: var(--db-surface-raised);
   --color-db-border: var(--db-border);
   --color-db-accent: var(--db-accent-solid);
   --color-db-on-accent: var(--db-on-accent);
   --color-db-lavender: var(--db-lavender);
   --color-db-text: var(--db-text);
+  --color-db-text-dim: var(--db-text-dim);
   --color-db-muted: var(--db-muted);
+  --color-db-danger: var(--db-danger);
+  --color-db-ring: var(--db-ring);
   --radius-db: var(--db-radius);
 }
 
@@ -72,31 +77,37 @@
   --ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+/* shadcn's dark tokens, remapped to the Daybreak palette so Button, Dialog,
+   Tabs, Textarea, DropdownMenu, Badge and sonner inherit it. The theme is
+   forced dark, and <body> carries .daybreak. Scoped to `.dark .daybreak`, not
+   `.dark` alone: a custom property's var() resolves on the element that
+   declares it, and the --db-* tokens only exist from <body> down. */
+.dark .daybreak {
+  --background: var(--db-base);
+  --foreground: var(--db-text);
+  --card: var(--db-surface-solid);
+  --card-foreground: var(--db-text);
+  --popover: var(--db-surface-solid);
+  --popover-foreground: var(--db-text);
+  --primary: var(--db-accent-solid);
+  --primary-foreground: var(--db-on-accent);
+  --secondary: var(--db-surface-raised);
+  --secondary-foreground: var(--db-text);
+  --muted: var(--db-surface-raised);
+  --muted-foreground: var(--db-muted);
+  --accent: var(--db-surface-raised);
+  --accent-foreground: var(--db-text);
+  --destructive: var(--db-danger);
+  --border: var(--db-border);
+  --input: var(--db-border);
+  --ring: var(--db-ring);
 }
 
 /* Daybreak "dawn dusk" palette, taken from the landing hero (design.md).
-   Scoped to .daybreak so later redesigned pages can opt in. Tailwind names:
-   bg-db-base, bg-db-surface, text-db-text, text-db-muted, text-db-lavender,
-   rounded-db; gradients are bg-(image:--db-accent) / bg-(image:--db-glow-*). */
+   Scoped to .daybreak, which <body> carries (app/layout.tsx), so it applies
+   on every route. Tailwind names: bg-db-base, bg-db-surface,
+   bg-db-surface-solid, bg-db-surface-raised, text-db-text, text-db-text-dim, text-db-muted, text-db-lavender,
+   text-db-danger, outline-db-ring, rounded-db; gradients are bg-(image:--db-accent) / bg-(image:--db-glow-*). */
 @layer base {
   .daybreak {
     --db-base: #14111c;
@@ -105,14 +116,36 @@
     /* The same surface flattened onto --db-base, for APIs that need an opaque
      colour (Clerk derives its shades from it). */
     --db-surface-solid: #2c272d;
+    /* A step lighter than --db-surface, for user chat bubbles and hovered
+     cards. Flattens to about #342f36: --db-text 11.7:1, --db-muted 4.6:1,
+     so shadcn's muted-foreground on muted/accent fills stays AA. */
+    --db-surface-raised: rgba(54, 48, 55, 0.955);
     --db-border: rgba(214, 228, 255, 0.14);
     --db-accent: linear-gradient(163deg, #fbbc94 0%, #f49d70 46%, #e88654 100%);
     --db-accent-solid: #f49d70;
+    /* The accent gradient's light first stop; the brand mark's top colour. */
+    --db-accent-light: #fbbc94;
     /* Text on the accent: the page base, 8.8:1 on #f49d70. */
     --db-on-accent: #14111c;
     --db-lavender: #9c86ce;
     --db-text: #f6f1ec;
     --db-muted: #98999c;
+    /* Secondary text under 14px on a surface, where --db-muted is too faint
+     (spec § Accessibility): --db-text at 75%, 8.0:1 on --db-surface-solid,
+     and still AA where it sits over a light preview. */
+    --db-text-dim: rgba(246, 241, 236, 0.75);
+    /* Warm red for destructive actions and errors: 6.1:1 on --db-base,
+     4.8:1 on --db-surface-solid. Used as shadcn's --destructive. */
+    --db-danger: #ef6a55;
+    /* The one focus ring colour, the landing composer's (design.md): a solid
+     2px outline at 3px offset (focusRingClass in components/reusable.tsx).
+     Also shadcn's --ring, whose `ring-ring/50` halos land at ~50% peach. */
+    --db-ring: #f8b285;
+    /* Code syntax colours for strings (a warm green) and numbers/constants (a
+     muted amber), 10.4:1 and 9.1:1 on --db-base. Sandpack takes literals, so
+     lib/sandpack-theme.ts mirrors them. */
+    --db-syntax-string: #b5c98a;
+    --db-syntax-number: #d4b06a;
     --db-radius: 26px;
     /* Faint dawn glows (under 15% opacity): peach rising from below, lavender
      falling from above. */
@@ -129,6 +162,8 @@
     /* The hero's --e-soft curve. */
     --db-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --db-accent-shadow: 0 3px 12px rgba(210, 110, 60, 0.34);
+    /* The landing cards' drop shadow (landing.module.css), for Clerk cards. */
+    --db-card-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
 
     background-color: var(--db-base);
     color: var(--db-text);
@@ -154,14 +189,25 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
 
+  /* No bg-background/text-foreground here: body's .daybreak class sets its
+     background-color and color from --db-base and --db-text. */
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply antialiased;
     font-synthesis: none;
     text-rendering: geometricPrecision;
   }
+}
+
+/* Sandpack's controls (preview refresh, editor tabs, file explorer) and the
+   code panel's tab panels have no visible focus of their own. Give them the
+   Daybreak ring, inset since they fill the panel. The .daybreak prefix
+   outranks Sandpack's injected single-class rules. */
+.daybreak .sp-layout :focus-visible {
+  outline: 2px solid var(--db-ring);
+  outline-offset: -2px;
 }
 
 @keyframes blink {
@@ -182,5 +228,17 @@
   to {
     transform: translate(-50%, -50%) scale(16);
     opacity: 0;
+  }
+}
+
+/* A light band sweeping across the "Improve with Agent" button
+   (components/CodePanel.tsx). Only runs without a reduced-motion preference. */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(100%);
   }
 }

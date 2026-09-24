@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import RisingSunMark from "@/components/brand/RisingSunMark";
 import { Message, StatusStep } from "@/types/workspace";
-import { BlueTitle } from "./reusable";
+import {
+  accentPillClass,
+  focusRingClass,
+  focusRingWithinClass,
+  secondaryPillClass,
+} from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -11,14 +16,13 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowUp,
   Check,
-  Divide,
   Loader2,
   Paperclip,
-  Sparkle,
   Sparkles,
   Square,
   Wand2,
   X,
+  Zap,
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -38,6 +42,13 @@ interface ChatPanelProps {
   appTitle: string | null;
   onStop: () => void;
 }
+
+// The assistant's avatar: the Daybreak mark on a raised tile.
+const AssistantAvatar = () => (
+  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-db-surface-raised">
+    <RisingSunMark className="size-4" />
+  </div>
+);
 
 const getSupabaseClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -77,12 +88,6 @@ const ChatPanel = ({
   const noCredits = credits <= 0;
   const canSubmit =
     input.trim().length > 0 && !isGenerating && !isImproving && !noCredits;
-
-  const statuses = [
-    { label: "planning the component structure", status: "done" },
-    { label: "Writing App.js and components", status: "done" },
-    { label: "Validating packages...", status: "running" },
-  ];
 
   const handleSubmit = async () => {
     const trimmed = input.trim();
@@ -158,32 +163,45 @@ const ChatPanel = ({
   const isStreamingAssistant = isImproving && lastMsg?.role === "assistant";
 
   return (
-    <div className="flex w-[320px] shrink-0 flex-col bg-[#0d0d0d]">
-      <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
-        <BlueTitle>{appTitle}</BlueTitle>
+    <div className="flex w-[320px] shrink-0 flex-col border-r border-db-border bg-db-surface/40">
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 border-b border-db-border px-4 py-3",
+          focusRingWithinClass,
+        )}
+      >
+        <span className="min-w-0 truncate font-display text-[15px] font-medium tracking-[-0.01em] text-db-text">
+          {appTitle}
+        </span>
         <PricingModal reason={noCredits ? "credits" : "upgrade"}>
           <span
             className={cn(
-              "rounded-full px-2 py-0.5 text-[11px] transition-color",
-              noCredits
-                ? "bg-red-500/15 text-red-400/80 hover:bg-red-500/25"
-                : "bg-white/6 text-white/30 hover:bg-white/10 hover:text-white/50",
+              secondaryPillClass,
+              "inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium whitespace-nowrap",
+              noCredits &&
+                "border-db-danger/40 text-db-danger hover:border-db-danger/70",
             )}
           >
+            <Zap
+              className={cn(
+                "size-3",
+                noCredits ? "text-db-danger" : "fill-db-accent text-db-accent",
+              )}
+            />
             {noCredits
               ? "No credits. Upgrade"
-              : `${credits} credits${credits !== 1 ? "s" : ""}`}
+              : `${credits} credit${credits !== 1 ? "s" : ""}`}
           </span>
         </PricingModal>
       </div>
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-3 py-4 [&:: -webkit-scrollbar]:hidden"
+        className="flex-1 overflow-y-auto px-3 py-4 [&::-webkit-scrollbar]:hidden"
       >
         {messages.length === 0 && !isGenerating && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-center text-xs text-white/20">
+            <p className="text-center text-xs text-db-text-dim">
               Describe what you want to build
             </p>
           </div>
@@ -206,8 +224,8 @@ const ChatPanel = ({
                         />
                       )}
 
-                      <div className="rounded-2xl rounded-br-sm bg-white/10 px-3.5 py-2.5">
-                        <p className="text-[13px] leading-relaxed text-white/80 wrap-break-word">
+                      <div className="rounded-2xl rounded-br-sm bg-db-surface-raised px-3.5 py-2.5">
+                        <p className="text-[13px] leading-relaxed text-db-text wrap-break-word">
                           {msg.content}
                         </p>
                       </div>
@@ -219,26 +237,20 @@ const ChatPanel = ({
                         className="mt-0.5 h-6 w-6 shrink-0 rounded-full"
                       />
                     ) : (
-                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-white/50">
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-db-surface-raised text-[10px] font-semibold text-db-text">
                         {user?.firstName?.[0] ?? "U"}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="flex items-start gap-2">
-                    <Image
-                      src="/logo-short.jpeg"
-                      alt="Daybreak"
-                      width={24}
-                      height={24}
-                      className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
-                    />
-                    <div className="min-w-0 rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-2.5">
+                    <AssistantAvatar />
+                    <div className="min-w-0 rounded-2xl rounded-tl-sm border border-db-border bg-db-surface px-3.5 py-2.5">
                       {isLiveStream && !msg.content ? (
                         // Empty placeholder — show Cline thinking indicator
                         <div className="flex items-center gap-2">
-                          <Wand2 className="h-3 w-3 shrink-0 text-blue-400/60 animate-pulse" />
-                          <span className="text-[12px] text-white/30 animate-pulse">
+                          <Wand2 className="h-3 w-3 shrink-0 text-db-lavender motion-safe:animate-pulse" />
+                          <span className="text-[12px] text-db-lavender motion-safe:animate-pulse">
                             Cline is thinking…
                           </span>
                         </div>
@@ -247,19 +259,19 @@ const ChatPanel = ({
                         // with a blinking cursor at the end
                         <div>
                           <div className="mb-1.5 flex items-center gap-1.5">
-                            <Wand2 className="h-3 w-3 shrink-0 text-blue-400/60" />
-                            <span className="text-[10px] font-medium uppercase tracking-wider text-blue-400/50">
+                            <Wand2 className="h-3 w-3 shrink-0 text-db-lavender" />
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-db-lavender">
                               Agent reasoning
                             </span>
                           </div>
-                          <p className="text-[12px] leading-relaxed text-white/35 wrap-break-word">
+                          <p className="text-[12px] leading-relaxed text-db-text-dim wrap-break-word">
                             {msg.content}
-                            <span className="ml-0.5 inline-block h-3 w-0.5 animate-[blink_1s_ease-in-out_infinite] bg-blue-400/60 align-middle" />
+                            <span className="ml-0.5 inline-block h-3 w-0.5 motion-safe:animate-[blink_1s_ease-in-out_infinite] bg-db-accent align-middle" />
                           </p>
                         </div>
                       ) : (
                         // Normal completed assistant message
-                        <div className="prose prose-sm prose-invert max-w-none wrap-break-word text-[13px] leading-relaxed text-white/70 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-blue-300/80 [&_code]:text-xs [&_code]:break-all [&_li]:my-0.5 [&_p]:my-1 [&_pre]:overflow-x-auto! [&_pre]:whitespace-pre-wrap! [&_ul]:my-1">
+                        <div className="prose prose-sm prose-invert max-w-none wrap-break-word text-[13px] leading-relaxed text-db-text [&_code]:rounded [&_code]:bg-db-surface-raised [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-db-accent [&_code]:text-xs [&_code]:break-all [&_li]:my-0.5 [&_p]:my-1 [&_pre]:overflow-x-auto! [&_pre]:whitespace-pre-wrap! [&_ul]:my-1">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                       )}
@@ -270,33 +282,27 @@ const ChatPanel = ({
             );
           })}
 
-          {/* Status steps - shown while generatin */}
+          {/* Status steps - shown while generating */}
           {isGenerating && (
             <div className="flex items-start gap-2">
-              <Image
-                src="/logo-short.jpeg"
-                alt="Daybreak"
-                width={24}
-                height={24}
-                className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
-              />
-              <div className="rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-3">
+              <AssistantAvatar />
+              <div className="rounded-2xl rounded-tl-sm border border-db-border bg-db-surface px-3.5 py-3">
                 <div className="space-y-2">
                   {statusLog.map((step, i) => (
-                    <div key={i} className=" flex items-center gap-2.5">
+                    <div key={i} className="flex items-center gap-2.5">
                       <div className="flex h-4 w-4 shrink-0 items-center justify-center">
                         {step.status === "running" ? (
-                          <Loader2 className="h-3 w-3 animate-spin text-blue-400/80" />
+                          <Loader2 className="h-3 w-3 animate-spin text-db-accent" />
                         ) : (
-                          <Check className="h-3 w-3 text-white/25" />
+                          <Check className="h-3 w-3 text-db-muted" />
                         )}
                       </div>
                       <span
                         className={cn(
                           "text-[12px] transition-colors duration-300",
                           step.status === "running"
-                            ? "text-white/75"
-                            : "text-white/25",
+                            ? "text-db-text"
+                            : "text-db-text-dim",
                         )}
                       >
                         {step.label}
@@ -311,19 +317,30 @@ const ChatPanel = ({
       </div>
 
       {noCredits && (
-        <div className="mx-3 mb-2 rounded-xl border border-red-500/15 bg-red-950/40 px-4 py-3">
-          <p className="mb-2 text-[12px] font-medium text-red-400/80">
+        <div
+          className={cn(
+            "mx-3 mb-2 rounded-xl border border-db-danger/30 bg-db-surface px-4 py-3",
+            focusRingWithinClass,
+          )}
+        >
+          <p className="mb-2 text-[12px] font-medium text-db-danger">
             You&apos;ve used all your credits
           </p>
           <PricingModal reason="credits">
-            <span className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 text-xs text-black active:scale-95">
-              <Sparkles className="h-3 w-3">Upgrade Plan</Sparkles>
+            <span
+              className={cn(
+                accentPillClass,
+                "inline-flex h-8 items-center gap-1.5 px-3 text-xs font-semibold",
+              )}
+            >
+              <Sparkles className="h-3 w-3" />
+              Upgrade Plan
             </span>
           </PricingModal>
         </div>
       )}
 
-      <div className="border-t border-white/6 pt-3">
+      <div className="border-t border-db-border px-3 pt-3 pb-2">
         {peindingImageUrl && (
           <div className="relative mb-2 w-fit">
             <img
@@ -333,19 +350,26 @@ const ChatPanel = ({
             />
             <button
               onClick={() => setPendingImageUrl(null)}
-              className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/80 text-white/60 hover:text-white"
+              aria-label="Remove image"
+              className={cn(
+                "absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-db-base text-db-muted hover:text-db-text",
+                focusRingClass,
+              )}
             >
               <X className="h-2.5 w-2.5" />
             </button>
           </div>
         )}
 
+        {/* The landing composer's glass: surface fill, inset border, the
+            Daybreak radius, and the peach ring while the textarea has focus. */}
         <div
           className={cn(
-            "rounded-xl border bg-white/4 transition-colors",
+            "rounded-db bg-db-surface inset-ring inset-ring-db-border transition-[opacity,box-shadow]",
+            "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-3 has-[textarea:focus-visible]:outline-db-ring",
             isGenerating || isImproving || noCredits
-              ? "border-white/4 opacity-60"
-              : "border-white//8 hover:border-white/12",
+              ? "opacity-60"
+              : "hover:inset-ring-db-accent/40",
           )}
         >
           <textarea
@@ -354,6 +378,7 @@ const ChatPanel = ({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGenerating || isImproving || noCredits}
+            aria-label="Ask AI to modify your app"
             placeholder={
               noCredits
                 ? "Upgrade to keep building"
@@ -364,20 +389,18 @@ const ChatPanel = ({
                     : "Ask AI to modify"
             }
             rows={1}
-            className="w-full resize-none bg-transparent px-3.5 pb-2 pt-3 text-[13px] text-white/80 placeholder:text-white/20 focus:outline-none"
+            className="w-full resize-none bg-transparent px-4 pb-2 pt-3.5 text-[13px] text-db-text placeholder:text-db-muted focus:outline-none"
             style={{ maxHeight: 160 }}
           />
 
-          <div className="flex items-center justify-between px-2 pb-2">
+          <div className="flex items-center justify-between px-2.5 pb-2.5">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               onClick={() => fileRef.current?.click()}
               disabled={isGenerating || isImproving || isUploading || noCredits}
-              className="h-7 w-7 rounded-lg text-white/25 
-              hover:bg-white/6
-              hover:text-white/50
-              disabled:opacity-40"
+              aria-label="Attach image"
+              className="rounded-full text-db-muted hover:bg-db-surface-raised hover:text-db-text disabled:opacity-40"
             >
               {isUploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -396,8 +419,11 @@ const ChatPanel = ({
 
             {isGenerating || isImproving ? (
               <Button
+                variant="secondary"
+                size="icon-sm"
                 onClick={onStop}
-                className="flex items-center justify-center h-7 w-7 rounded-lg bg-white/10 text-white/60 transition-all hover:bg-white/20 hover:text-white active-scale"
+                aria-label="Stop generating"
+                className="rounded-full active:scale-95"
               >
                 <Square className="h-3 w-3 fill-current" />
               </Button>
@@ -405,23 +431,16 @@ const ChatPanel = ({
               <Button
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className={cn(
-                  "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
-                  canSubmit
-                    ? "bg-white text-black hover:bg-white/90 active:scale-95"
-                    : "bg-white/8 text-white/20 shadow-none",
-                )}
+                size="icon-sm"
+                aria-label="Send"
+                className={accentPillClass}
               >
-                {isGenerating || isImproving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <ArrowUp className="h-3.5 w-3.5" />
-                )}
+                <ArrowUp className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         </div>
-        <p className="mt-1.5 text-center text-[10px] text-white/15">
+        <p className="mt-1.5 text-center text-[10px] text-db-text-dim">
           {isGenerating || isImproving
             ? "click ⬜ to stop generation"
             : "⏎ to send. shift + ⏎ for new line"}

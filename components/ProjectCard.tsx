@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Trash2, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { ProjectSummary } from "@/actions/projects";
 import { DeleteProjectModal } from "@/components/DeleteProjectModal";
+import { focusRingClass } from "@/components/reusable";
+import { cn } from "@/lib/utils";
 
 interface ProjectCardProps {
   projects: ProjectSummary[];
@@ -23,37 +25,34 @@ export function ProjectCard({ projects }: ProjectCardProps) {
         return (
           <div
             key={project.id}
-            className="group relative flex flex-col rounded-xl border border-white/6 bg-[#0f0f0f] p-4 transition-colors hover:border-white/10 hover:bg-[#111111]"
+            className="group relative flex flex-col rounded-db border border-db-border bg-db-surface p-5 transition-colors hover:border-db-accent/40 hover:bg-db-surface-raised"
           >
+            {/* The whole card is the link; the delete button sits above it. */}
             <Link
               href={`/workspace?id=${project.id}`}
-              className="absolute inset-0 rounded-xl"
+              className={cn("absolute inset-0 rounded-db", focusRingClass)}
               aria-label={`Open ${title}`}
             />
 
             <div className="mb-2 flex items-start justify-between gap-2">
-              <p className="line-clamp-1 text-sm font-medium leading-snug text-white/80">
+              <p className="line-clamp-1 text-[15px] font-medium leading-snug text-db-text">
                 {title}
               </p>
-              <DeleteProjectModal project={project}>
-                <span className="relative z-10 text-white/20 hover:text-red-400">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </span>
-              </DeleteProjectModal>
+              <DeleteProjectModal project={project} />
             </div>
 
             {project.firstPrompt && (
-              <p className="mb-3 line-clamp-2 text-[12px] leading-relaxed text-white/30">
+              <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-db-muted">
                 {project.firstPrompt}
               </p>
             )}
 
-            <div className="mt-auto flex items-center gap-3 pt-2 border-t border-white/4">
-              <span className="flex items-center gap-1 text-[11px] text-white/25">
-                <MessageSquare className="h-3 w-3" />
+            <div className="mt-auto flex items-center gap-3 border-t border-db-border pt-3 text-sm text-db-muted">
+              <span className="flex items-center gap-1">
+                <MessageSquare className="size-3" />
                 {msgCount} message{msgCount !== 1 ? "s" : ""}
               </span>
-              <span className="text-[11px] text-white/20">{timeAgo}</span>
+              <span>{timeAgo}</span>
             </div>
           </div>
         );

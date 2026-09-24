@@ -313,7 +313,7 @@ const WorkspaceClient = ({
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-[#0a0a0a]">
+    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-db-base">
       <ChatPanel
         messages={messages}
         isGenerating={isGenerating}
