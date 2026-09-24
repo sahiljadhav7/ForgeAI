@@ -1,6 +1,6 @@
 # Spec: New frontend (Daybreak landing page)
 
-Status: ready-for-agent
+Status: done
 Branch: `feat/new-frontend`
 
 ## Problem
@@ -91,6 +91,10 @@ The existing sections are kept in their current order and content: demo video (*
 - **Pricing:** Clerk `<PricingTable>` themed via `appearance`: Inter, `--db-surface` cards, `--db-accent` primary button, `--db-muted` text.
 - **Scroll reveal:** each section fades and rises 4–8px once when it enters the viewport, using one shared `IntersectionObserver` and the hero's `--e-soft` easing. Disabled under reduced motion.
 - `GravityStarsBackground` is removed from the landing page.
+
+### Final values from visual QA (ticket 07)
+- **Palette vs video:** the bottom row of `daybreak-hero.mp4` was sampled at the first frame, the middle and the loop point: `#0c0f13`, `#0c1219`, `#0a1119` (5% up: `#0d1217`–`#0f1720`). It is near-black blue, darker than the base. The fade runs from transparent to fully opaque `--db-base` at the hero's bottom edge, so the join itself is pure base colour and no seam shows. Final values are unchanged: **`--db-base: #14111c`**, and the fade is `rgba(20,17,28,0) 0% → .08 22% → .30 48% → .68 76% → var(--db-base) 100%` over `150 * --vu`.
+- **Landing landmarks:** the page root is a `<div class="root daybreak">` holding `<header>` (banner), `<main>` (hero + sections) and `<footer>` (contentinfo). The header is laid over the hero at the frame's padding (`--pad-*`), and a `--nav-h` spacer holds its row in the frame, so the geometry is unchanged. The `anim` class therefore lives on two subtrees (header and stage), each with the same teardown hook (`app/(landing)/entrance.ts`).
 
 ### Housekeeping
 - Delete `public/ForgeAI-video.mp4:Zone.Identifier` (a Windows download marker).

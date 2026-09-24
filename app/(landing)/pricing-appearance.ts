@@ -10,7 +10,7 @@ type PricingAppearance = NonNullable<
 // must be literal CSS colours. They mirror the .daybreak tokens in
 // app/globals.css. `elements` are plain CSS on nodes rendered inside the
 // .daybreak page, so they use the tokens directly.
-const DB = {
+const DB_LITERALS = {
   surfaceSolid: "#2c272d", // --db-surface-solid
   border: "rgba(214, 228, 255, 0.14)", // --db-border
   accent: "#f49d70", // --db-accent-solid
@@ -27,13 +27,13 @@ const proPlanId = PRICING_PLANS.find((plan) => plan.key === "pro")?.planId;
 // styles are unlayered and would beat Tailwind v4's layered utilities.
 export const pricingAppearance: PricingAppearance = {
   variables: {
-    colorPrimary: DB.accent,
-    colorPrimaryForeground: DB.onAccent,
-    colorBackground: DB.surfaceSolid,
-    colorForeground: DB.text,
-    colorMutedForeground: DB.muted,
+    colorPrimary: DB_LITERALS.accent,
+    colorPrimaryForeground: DB_LITERALS.onAccent,
+    colorBackground: DB_LITERALS.surfaceSolid,
+    colorForeground: DB_LITERALS.text,
+    colorMutedForeground: DB_LITERALS.muted,
     colorNeutral: "white",
-    colorBorder: DB.border,
+    colorBorder: DB_LITERALS.border,
     fontFamily: "var(--font-inter), Inter, sans-serif",
     fontFamilyButtons: "var(--font-inter), Inter, sans-serif",
     // Clerk's cards use the xl step (a little above this base), so they land
