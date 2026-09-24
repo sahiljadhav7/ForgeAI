@@ -42,7 +42,7 @@ function AiAvatar() {
 export default function Home() {
   return (
     <div
-      className={cn(styles.root, "daybreak min-h-screen selection:bg-white/20")}
+      className={cn(styles.root, "min-h-screen selection:bg-white/20")}
     >
       <Nav />
       <main>
