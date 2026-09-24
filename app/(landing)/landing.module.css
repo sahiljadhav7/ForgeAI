@@ -24,6 +24,7 @@
   --cta-r: 12;
   --cta-fs: 15.7;
   --cta-dy: 2;
+  --nav-h: 43;
 
   /* Hero */
   --hero-gap: 51;
@@ -145,7 +146,7 @@
     rgba(20, 17, 28, 0.08) 22%,
     rgba(20, 17, 28, 0.3) 48%,
     rgba(20, 17, 28, 0.68) 76%,
-    #14111c 100%
+    var(--db-base) 100%
   );
 }
 
@@ -174,7 +175,7 @@
   left: var(--pad-left);
   right: var(--pad-right);
   z-index: 2;
-  height: calc(43 * var(--u));
+  height: calc(var(--nav-h) * var(--u));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -363,7 +364,7 @@
 /* Holds the nav's row in the frame, so the hero lays out as in design.md. */
 .navSpace {
   flex: none;
-  height: calc(43 * var(--u));
+  height: calc(var(--nav-h) * var(--u));
 }
 
 .hero {
@@ -428,7 +429,7 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
   color: rgba(255, 255, 255, 0.92);
-  caret-color: #f49d70;
+  caret-color: var(--db-accent-solid);
   font-size: calc(var(--ph-fs) * var(--u));
   font-weight: var(--w-regular);
   line-height: 1.35;
@@ -530,7 +531,7 @@
   justify-content: center;
   border-radius: 50%;
   color: #fff;
-  background: linear-gradient(163deg, #fbbc94 0%, #f49d70 46%, #e88654 100%);
+  background: var(--db-accent);
   box-shadow: 0 calc(3 * var(--u)) calc(12 * var(--u)) rgba(210, 110, 60, 0.34);
   cursor: pointer;
   transition:
@@ -599,19 +600,11 @@
 
 /* ───────── Focus ───────── */
 
-.nav :focus-visible,
-.stage :focus-visible {
+/* design.md's ring, at zero specificity: controls with their own shape
+   (send circle, chips, CTA) keep their radius, the rest get 4px. */
+:where(.nav, .stage) :where(:focus-visible) {
   outline: 2px solid #f8b285;
   outline-offset: 3px;
-}
-
-/* design.md's 4px radius, applied only to controls without their own shape
-   so the send circle, chips and CTA keep their outlines round. */
-.nav .brand:focus-visible,
-.nav .link:focus-visible,
-.nav .sheetLink:focus-visible,
-.stage .cue:focus-visible,
-.stage .ph:focus-visible {
   border-radius: 4px;
 }
 

@@ -140,10 +140,9 @@
 @layer components {
   @media (prefers-reduced-motion: no-preference) {
     [data-reveal] {
-      --reveal-ease: var(--db-ease, cubic-bezier(0.22, 1, 0.36, 1));
       transition:
-        opacity 0.5s var(--reveal-ease),
-        transform 0.5s var(--reveal-ease);
+        opacity 0.5s var(--db-ease),
+        transform 0.5s var(--db-ease);
     }
 
     [data-reveal="pending"] {

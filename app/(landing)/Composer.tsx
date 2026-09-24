@@ -117,7 +117,8 @@ export default function Composer() {
     return () => window.removeEventListener("resize", fitToContent);
   }, [fitToContent]);
 
-  const submit = () => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const plan = planSubmit(prompt, { isLoaded, isSignedIn });
     if (!plan) return;
     if (plan.type === "navigate") {
@@ -130,15 +131,10 @@ export default function Composer() {
     }
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    submit();
-  };
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
-      submit();
+      e.currentTarget.form?.requestSubmit();
     }
   };
 

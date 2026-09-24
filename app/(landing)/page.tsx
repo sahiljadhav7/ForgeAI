@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { FEATURES, STEPS } from "@/lib/data";
 import { PricingTable, SignInButton } from "@clerk/nextjs";
-import { ArrowRight } from "lucide-react";
-import { Zap } from "lucide-react";
+import { ArrowRight, ChevronRight, Zap } from "lucide-react";
 import { SectionLabel, SectionHeading } from "@/components/reusable";
-import { ChevronRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { cn } from "@/lib/utils";
 import Hero from "./Hero";
@@ -24,6 +22,22 @@ const cardClass = "rounded-db border border-db-border bg-db-surface";
 // Nothing is sticky on this page (the nav scrolls away with the hero), so
 // anchors only need a little breathing room above the section.
 const sectionClass = "scroll-mt-10 px-4 pb-32";
+
+// Kanban columns in the demo mock, with how many placeholder cards each shows.
+const DEMO_COLUMNS = [
+  { name: "Todo", cards: 3 },
+  { name: "In Progress", cards: 2 },
+  { name: "Done", cards: 1 },
+];
+
+// The assistant's avatar in the demo chat.
+function AiAvatar() {
+  return (
+    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-(image:--db-accent)">
+      <Zap className="h-3 w-3 fill-db-on-accent text-db-on-accent" />
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -74,9 +88,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex gap-2.5">
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-(image:--db-accent)">
-                      <Zap className="h-3 w-3 fill-db-on-accent text-db-on-accent" />
-                    </div>
+                    <AiAvatar />
 
                     <div className="rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-2.5">
                       <p className="text-xs text-white/60">
@@ -89,9 +101,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex gap-2.5">
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-(image:--db-accent)">
-                      <Zap className="h-3 w-3 fill-db-on-accent text-db-on-accent" />
-                    </div>
+                    <AiAvatar />
                     <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-3">
                       {[0, 0.15, 0.3].map((delay) => (
                         <span
@@ -125,19 +135,19 @@ export default function Home() {
                 </div>
 
                 <div className="flex flex-1 gap-3 overflow-hidden bg-black/20 p-5">
-                  {["Todo", "In Progress", "Done"].map((col, ci) => (
-                    <div key={col} className="flex w-1/3 flex-col gap-2">
+                  {DEMO_COLUMNS.map((col) => (
+                    <div key={col.name} className="flex w-1/3 flex-col gap-2">
                       <div className="mb-1 flex items-center justify-between">
                         <span className="text-xs uppercase tracking-wider text-white/40">
-                          {col}
+                          {col.name}
                         </span>
 
                         <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-xs text-white/35">
-                          {[3, 2, 1][ci]}
+                          {col.cards}
                         </span>
                       </div>
 
-                      {Array.from({ length: [3, 2, 1][ci] }).map((_, i) => (
+                      {Array.from({ length: col.cards }).map((_, i) => (
                         <div
                           key={i}
                           className="rounded-lg border border-white/8 bg-white/4 p-2.5"
@@ -196,21 +206,19 @@ export default function Home() {
             </div>
 
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {FEATURES.map(({ icon: Icon, label, desc }) => {
-                return (
-                  <div key={label} className={cn(cardClass, "group p-7")}>
-                    <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/4 group-hover:border-white/15 group-hover:bg-white/8">
-                      <Icon className="h-4 w-4 text-white/60 group-hover:text-db-accent" />
-                    </div>
-                    <p className="mb-2 text-sm font-semibold text-db-text">
-                      {label}
-                    </p>
-                    <p className="text-sm leading-relaxed text-db-muted">
-                      {desc}
-                    </p>
+              {FEATURES.map(({ icon: Icon, label, desc }) => (
+                <div key={label} className={cn(cardClass, "group p-7")}>
+                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/4 group-hover:border-white/15 group-hover:bg-white/8">
+                    <Icon className="h-4 w-4 text-white/60 group-hover:text-db-accent" />
                   </div>
-                );
-              })}
+                  <p className="mb-2 text-sm font-semibold text-db-text">
+                    {label}
+                  </p>
+                  <p className="text-sm leading-relaxed text-db-muted">
+                    {desc}
+                  </p>
+                </div>
+              ))}
             </div>
           </Reveal>
         </section>
