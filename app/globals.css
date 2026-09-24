@@ -133,6 +133,11 @@
     --db-danger: #ef6a55;
     /* Focus ring: --db-accent-solid at 50% alpha. Used as shadcn's --ring. */
     --db-ring: rgba(244, 157, 112, 0.5);
+    /* Code syntax colours for strings (a warm green) and numbers/constants (a
+     muted amber), 10.4:1 and 9.1:1 on --db-base. Sandpack takes literals, so
+     lib/sandpack-theme.ts mirrors them. */
+    --db-syntax-string: #b5c98a;
+    --db-syntax-number: #d4b06a;
     --db-radius: 26px;
     /* Faint dawn glows (under 15% opacity): peach rising from below, lavender
      falling from above. */
@@ -206,5 +211,17 @@
   to {
     transform: translate(-50%, -50%) scale(16);
     opacity: 0;
+  }
+}
+
+/* A light band sweeping across the "Improve with Agent" button
+   (components/CodePanel.tsx). Only runs without a reduced-motion preference. */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%,
+  100% {
+    transform: translateX(100%);
   }
 }

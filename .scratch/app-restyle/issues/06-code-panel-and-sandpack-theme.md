@@ -1,6 +1,6 @@
 # 06 — Restyle the code panel and replace the Sandpack theme
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: `.scratch/app-restyle/spec.md` § Page treatments (Workspace, Sandpack)
 
@@ -34,3 +34,25 @@ The right-hand side of the workspace uses `dracula` plus violet/fuchsia/cyan "Im
 - `npm run lint`, `npm test`, `npm run build` and `npm run test:e2e` pass.
 
 ## Comments
+
+**2026-09-24 (agent):** Done.
+- `lib/sandpack-theme.ts` holds `SANDPACK_LITERALS`, each commented with the token it mirrors, and `daybreakSandpackTheme`, a plain `SandpackTheme` object literal, so there is no TDD test: the type already requires every key.
+  - surface1 is `--db-base`, surface2 is `--db-border` flattened to #2f2f3c, surface3 is `--db-surface-solid`, and the accent is peach.
+  - Syntax on base: keywords lavender (6.0:1), strings a warm green (10.4:1), numbers amber (9.1:1), functions peach (8.8:1), comments `--db-muted` italic (6.5:1). UI text is Inter and code uses a system mono stack.
+  - Green and amber became tokens: `--db-syntax-string` and `--db-syntax-number`.
+  - `@codesandbox/sandpack-themes` was removed. Nothing else used it.
+- Tabs bar: `--db-surface`, 44px tall, with a `--db-border` bottom. Inactive tabs are muted. The focus ring is inset, so the header doesn't clip it.
+  - Bug fix: the active underline never showed before. shadcn's `group-data-horizontal` variants don't match Base UI's `data-orientation`, so the underline is positioned in CodePanel instead.
+- Improve with Agent is a lavender→peach wash with a lavender edge, a peach Bot icon and a peach PRO badge with `--db-on-accent` text.
+  - Bug fix: `@keyframes shimmer` never existed. It is added to globals.css and runs only under `motion-safe`. Its computed animation is `none` with reduced motion.
+  - The expanded input uses the same wash and a peach circle send button. Both got `aria-label`s.
+  - The non-Pro trigger's ring comes from a `focusRingWithinClass` wrapper.
+- Download is a `secondaryPillClass` pill.
+- The overlay is `bg-db-base/85` with a blur and a peach `RingLoader`, replacing the blue one. The sub-line is `text-db-text/75`: over a light preview, muted text only reaches 4.2:1.
+- The error bar is opaque `--db-surface-solid` with a `--db-danger` border, icon and title (4.8:1). The translucent surface only reaches 4.1:1 over a white preview. Fix with AI is the accent pill.
+- The explorer border is `--db-border`. The placeholder app, which runs in the iframe without tokens, uses `SANDPACK_LITERALS`.
+- Verified with a temporary preview route (deleted) that renders CodePanel with fake files, with `/api/gen-ai-code` and `/api/improve` aborted. Screenshots at 1440×900 and 900×900 cover Preview, Code, the Improve input, the locked state, generating, improving, the runtime error bar and the focus rings.
+  - lint (0 errors, 6 warnings), `npm test` (47), build and `test:e2e` (25 passed, 3 skipped) all pass.
+  - Not re-shot after review: the non-Pro wrapper span and the opaque error bar.
+  - Not verified: the real signed-in workspace.
+- For 07: the error bar is `absolute inset-x-0` with no positioned ancestor, so it spans the whole viewport, over the chat column too. This is unchanged from before. SANDPACK_LITERALS repeats four values from `DB_LITERALS` in `lib/clerk-appearance.ts`.
