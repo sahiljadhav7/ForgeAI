@@ -30,6 +30,17 @@
     var(--font-inter), -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   --font-serif: var(--font-sans);
+
+  /* Daybreak palette (defined under .daybreak below). */
+  --color-db-base: var(--db-base);
+  --color-db-surface: var(--db-surface);
+  --color-db-border: var(--db-border);
+  --color-db-accent: var(--db-accent-solid);
+  --color-db-on-accent: var(--db-on-accent);
+  --color-db-lavender: var(--db-lavender);
+  --color-db-text: var(--db-text);
+  --color-db-muted: var(--db-muted);
+  --radius-db: var(--db-radius);
 }
 
 /* Inter display role (design.md): optical size 32, weight 410. */
@@ -80,6 +91,66 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+}
+
+/* Daybreak "dawn dusk" palette, taken from the landing hero (design.md).
+   Scoped to .daybreak so later redesigned pages can opt in. Tailwind names:
+   bg-db-base, bg-db-surface, text-db-text, text-db-muted, text-db-lavender,
+   rounded-db; gradients are bg-(image:--db-accent) / bg-(image:--db-glow-*). */
+@layer base {
+  .daybreak {
+    --db-base: #14111c;
+    /* Composer glass rgba(41,41,43,.955), tinted slightly warm. */
+    --db-surface: rgba(45, 40, 46, 0.955);
+    /* The same surface flattened onto --db-base, for APIs that need an opaque
+     colour (Clerk derives its shades from it). */
+    --db-surface-solid: #2c272d;
+    --db-border: rgba(214, 228, 255, 0.14);
+    --db-accent: linear-gradient(163deg, #fbbc94 0%, #f49d70 46%, #e88654 100%);
+    --db-accent-solid: #f49d70;
+    /* Text on the accent: the page base, 8.8:1 on #f49d70. */
+    --db-on-accent: #14111c;
+    --db-lavender: #9c86ce;
+    --db-text: #f6f1ec;
+    --db-muted: #98999c;
+    --db-radius: 26px;
+    /* Faint dawn glows (under 15% opacity): peach rising from below, lavender
+     falling from above. */
+    --db-glow-peach: radial-gradient(
+      60% 55% at 50% 100%,
+      rgba(244, 157, 112, 0.12),
+      transparent 70%
+    );
+    --db-glow-lavender: radial-gradient(
+      65% 60% at 50% 0%,
+      rgba(156, 134, 206, 0.14),
+      transparent 70%
+    );
+    /* The hero's --e-soft curve. */
+    --db-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --db-accent-shadow: 0 3px 12px rgba(210, 110, 60, 0.34);
+
+    background-color: var(--db-base);
+    color: var(--db-text);
+  }
+}
+
+/* Scroll reveal (components/Reveal.tsx): content that starts below the fold
+   waits at "pending" and rises 6px into place once, when it scrolls in. */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      --reveal-ease: var(--db-ease, cubic-bezier(0.22, 1, 0.36, 1));
+      transition:
+        opacity 0.5s var(--reveal-ease),
+        transform 0.5s var(--reveal-ease);
+    }
+
+    [data-reveal="pending"] {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
 }
 
 @layer base {

@@ -1,9 +1,5 @@
 import React from "react";
 
-export const GrayTitle = ({ children }: { children: React.ReactNode }) => {
-  return <span className="text-white/90">{children}</span>;
-};
-
 export const BlueTitle = ({
   children,
   className,
@@ -20,28 +16,27 @@ export const BlueTitle = ({
   );
 };
 
+// Daybreak section label: lavender, sentence case.
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => {
   return (
-    <p className="inline-flex items-center gap-2 text-xs front-semibold text-blue-400 tracking-[0.14cm] uppercase mb-4">
-      <span className="w-4 h-px bg-blue-400" />
-      {children}
-      <span className="w-4 h-px bg-blue-400" />
-    </p>
+    <p className="mb-4 text-sm font-medium text-db-lavender">{children}</p>
   );
 };
 
+// Daybreak section heading: both lines in the same warm white, Inter display.
+// Two lines, split by a line break.
 export const SectionHeading = ({
-  gray,
-  blue,
+  line1,
+  line2,
 }: {
-  gray: string;
-  blue: string;
+  line1: string;
+  line2: string;
 }) => {
   return (
-    <h2 className="font-display text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight">
-      <GrayTitle>{gray}</GrayTitle>
+    <h2 className="font-display text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.01em] text-db-text">
+      {line1}
       <br />
-      <BlueTitle>{blue}</BlueTitle>
+      {line2}
     </h2>
   );
 };

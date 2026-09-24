@@ -6,8 +6,10 @@ import { ArrowRight } from "lucide-react";
 import { Zap } from "lucide-react";
 import { SectionLabel, SectionHeading } from "@/components/reusable";
 import { ChevronRight } from "lucide-react";
+import Reveal from "@/components/Reveal";
 import { cn } from "@/lib/utils";
 import Hero from "./Hero";
+import { pricingAppearance } from "./pricing-appearance";
 import styles from "./landing.module.css";
 
 export const metadata: Metadata = {
@@ -15,14 +17,27 @@ export const metadata: Metadata = {
   description: "Daybreak turns a written description into a working React app.",
 };
 
-// The sections below the hero are restyled in ticket 06.
+// Daybreak card: warm glass surface, 1px border, ~26px radius.
+const cardClass = "rounded-db border border-db-border bg-db-surface";
+
+// Nothing is sticky on this page (the nav scrolls away with the hero), so
+// anchors only need a little breathing room above the section.
+const sectionClass = "scroll-mt-10 px-4 pb-32";
+
 export default function Home() {
   return (
-    <main className={cn(styles.root, "min-h-screen bg-[#14111c] selection:bg-white/20")}>
+    <main
+      className={cn(styles.root, "daybreak min-h-screen selection:bg-white/20")}
+    >
       <Hero />
 
-      <section id="examples" className="px-4 pb-32">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/8 bg-[#0f0f0f] shadow-2xl shadow-black/60">
+      <section id="examples" className={sectionClass}>
+        <Reveal
+          className={cn(
+            cardClass,
+            "mx-auto max-w-5xl overflow-hidden shadow-2xl shadow-black/50",
+          )}
+        >
           <div className="flex items-center gap-2 border-b border-white/6 px-4 py-3">
             <div className="flex gap-1.5">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -31,15 +46,15 @@ export default function Home() {
             </div>
 
             <div className="mx-auto flex h-6 w-64 items-center justify-center rounded-md bg-white/5 px-3">
-              <span className="text-xs text-white/25">daybreak / workspace</span>
+              <span className="text-xs text-white/35">daybreak / workspace</span>
             </div>
           </div>
 
           <div className="flex h-105">
             {/* Chat panel */}
-            <div className="flex w-80 flex-col border-r border-white/6 bg-[#0d0d0d]">
+            <div className="flex w-80 flex-col border-r border-white/6 bg-black/15">
               <div className="border-b border-white/6 px-4 py-3">
-                <p className="text-xs uppercase tracking-wider text-white/30">
+                <p className="text-xs uppercase tracking-wider text-white/35">
                   Chat
                 </p>
               </div>
@@ -54,29 +69,29 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-2.5">
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white">
-                    <Zap className="h-3 w-3 fill-black text-black" />
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-(image:--db-accent)">
+                    <Zap className="h-3 w-3 fill-db-on-accent text-db-on-accent" />
                   </div>
 
                   <div className="rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-2.5">
                     <p className="text-xs text-white/60">
                       I&apos;ll build a Kanban board with Todo, In Progress, and
                       Done columns. I&apos;ll use{" "}
-                      <code className="text-blue-400/80">@dnd-kit/core</code>{" "}
+                      <code className="text-db-accent">@dnd-kit/core</code>{" "}
                       for smooth drag-and-drop…
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-2.5">
-                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white">
-                    <Zap className="h-3 w-3 fill-black text-black" />
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-(image:--db-accent)">
+                    <Zap className="h-3 w-3 fill-db-on-accent text-db-on-accent" />
                   </div>
                   <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-white/5 px-3.5 py-3">
                     {[0, 0.15, 0.3].map((delay) => (
                       <span
                         key={delay}
-                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/40"
+                        className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/40 motion-reduce:animate-none"
                         style={{ animationDelay: `${delay}s` }}
                       />
                     ))}
@@ -86,25 +101,25 @@ export default function Home() {
 
               <div className="border-t border-white/6 px-3 py-3">
                 <div className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2">
-                  <span className="flex-1 text-xs text-white/20">
+                  <span className="flex-1 text-xs text-white/30">
                     Ask AI to modify…
                   </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-white/20" />
+                  <ArrowRight className="h-3.5 w-3.5 text-white/30" />
                 </div>
               </div>
             </div>
 
             <div className="flex flex-1 flex-col">
               <div className="flex items-center gap-1 border-b border-white/6 px-4">
-                <button className="border-b-2 border-blue-400 px-3 py-2.5 text-xs text-white">
+                <button className="border-b-2 border-db-accent px-3 py-2.5 text-xs text-db-text">
                   Preview
                 </button>
-                <button className="px-3 py-2.5 text-xs text-white/30">
+                <button className="px-3 py-2.5 text-xs text-white/35">
                   Code
                 </button>
               </div>
 
-              <div className="flex flex-1 gap-3 overflow-hidden bg-[#141414] p-5">
+              <div className="flex flex-1 gap-3 overflow-hidden bg-black/20 p-5">
                 {["Todo", "In Progress", "Done"].map((col, ci) => (
                   <div key={col} className="flex w-1/3 flex-col gap-2">
                     <div className="mb-1 flex items-center justify-between">
@@ -112,7 +127,7 @@ export default function Home() {
                         {col}
                       </span>
 
-                      <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-xs text-white/30">
+                      <span className="rounded-full bg-white/8 px-1.5 py-0.5 text-xs text-white/35">
                         {[3, 2, 1][ci]}
                       </span>
                     </div>
@@ -120,7 +135,7 @@ export default function Home() {
                     {Array.from({ length: [3, 2, 1][ci] }).map((_, i) => (
                       <div
                         key={i}
-                        className="rounded-lg border border-white/8 bg-[#1a1a1a] p-2.5"
+                        className="rounded-lg border border-white/8 bg-white/4 p-2.5"
                       >
                         <div
                           className="mb-1.5 h-2 rounded-full bg-white/15"
@@ -134,108 +149,127 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      <section id="how-it-works" className="px-4 pb-32">
-        <div className="mx-auto mb-14 max-w-5xl text-center">
-          <SectionLabel>How it works</SectionLabel>
-          <SectionHeading gray="Four steps" blue="to a working app." />
-        </div>
+      <section id="how-it-works" className={sectionClass}>
+        <Reveal>
+          <div className="mx-auto mb-14 max-w-5xl text-center">
+            <SectionLabel>How it works</SectionLabel>
+            <SectionHeading line1="Four steps" line2="to a working app." />
+          </div>
 
-        <div className="mx-auto max-w-3xl">
-          {STEPS.map((step, i) => (
-            <div key={step.number} className="flex gap-6">
-              <div className="flex flex-col itemes-center">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/4">
-                  <span className="font-mono text-xs font-semibold text-white/50">
-                    {step.number}
-                  </span>
+          <ol className="mx-auto flex max-w-3xl flex-col gap-3">
+            {STEPS.map((step) => (
+              <li key={step.number} className={cn(cardClass, "flex gap-5 p-6")}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(image:--db-accent) text-xs font-semibold tabular-nums text-db-on-accent">
+                  {step.number}
+                </span>
+
+                <div className="pt-1.5">
+                  <p className="mb-1.5 text-sm font-semibold text-db-text sm:text-base">
+                    {step.label}
+                  </p>
+                  <p className="text-sm leading-relaxed text-db-muted">
+                    {step.desc}
+                  </p>
                 </div>
-              </div>
-
-              <div className="pb-10 pt-1.5">
-                <p className="mb-1.5 text-sm font-semibold sm:text-base">
-                  {step.label}
-                </p>
-                <p className="text-sm leading-relaxed text-white/40">
-                  {step.desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+              </li>
+            ))}
+          </ol>
+        </Reveal>
       </section>
 
-      <section id="features" className="px-4 pb-32">
-        <div className="mx-auto mb-14 max-w-5xl text-center">
-          <SectionLabel>Everything you need</SectionLabel>
-          <SectionHeading gray="From prompt" blue="to production." />
-        </div>
+      <section id="features" className={sectionClass}>
+        <Reveal>
+          <div className="mx-auto mb-14 max-w-5xl text-center">
+            <SectionLabel>Everything you need</SectionLabel>
+            <SectionHeading line1="From prompt" line2="to production." />
+          </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/6 bg-white/6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, label, desc }) => {
-            return (
-              <div
-                key={label}
-                className="group bg-[#0a0a0a] p-7 hover:bg-[#0f0f0f]"
-              >
-                <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/4 group-hover:border-white/15 group-hover:bg-white/8">
-                  <Icon className="h-4 w-4 text-white/60 group-hover:text-blue-400/70" />
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map(({ icon: Icon, label, desc }) => {
+              return (
+                <div key={label} className={cn(cardClass, "group p-7")}>
+                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/4 group-hover:border-white/15 group-hover:bg-white/8">
+                    <Icon className="h-4 w-4 text-white/60 group-hover:text-db-accent" />
+                  </div>
+                  <p className="mb-2 text-sm font-semibold text-db-text">
+                    {label}
+                  </p>
+                  <p className="text-sm leading-relaxed text-db-muted">
+                    {desc}
+                  </p>
                 </div>
-                <p className="mb-2 text-sm font-semibold"> {label}</p>
-                <p className="text-sm leading-relaxed text-white/40"> {desc}</p>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </Reveal>
       </section>
 
-      <section id="pricing" className="px-4 pb-32">
-        <div className="mx-auto mb-14 max-w-5xl text-center">
-          <SectionLabel>Simple pricing</SectionLabel>
-          <SectionHeading gray="Start free" blue="scale when ready." />
+      <section id="pricing" className={cn(sectionClass, "relative isolate")}>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[80%] bg-(image:--db-glow-peach)"
+        />
+        <Reveal>
+          <div className="mx-auto mb-14 max-w-5xl text-center">
+            <SectionLabel>Simple pricing</SectionLabel>
+            <SectionHeading line1="Start free" line2="scale when ready." />
 
-          <p className="mx-auto mt-4 max-w-sm text-sm text-white/35">
-            No credit card required. Upgrade or downgrade anytime.
-          </p>
-        </div>
+            <p className="mx-auto mt-4 max-w-sm text-sm text-db-muted">
+              No credit card required. Upgrade or downgrade anytime.
+            </p>
+          </div>
 
-        <div className="mx-auto max-w-5xl">
-          <PricingTable
-            checkoutProps={{
-              appearance: {
-                elements: {
-                  drawerRoot: {
-                    zIndex: 2000,
+          <div className="mx-auto max-w-5xl">
+            <PricingTable
+              appearance={pricingAppearance}
+              checkoutProps={{
+                appearance: {
+                  elements: {
+                    drawerRoot: {
+                      zIndex: 2000,
+                    },
                   },
                 },
-              },
-            }}
+              }}
+            />
+          </div>
+        </Reveal>
+      </section>
+
+      <section className="px-4 pb-32">
+        <Reveal
+          className={cn(
+            cardClass,
+            "relative isolate mx-auto max-w-5xl overflow-hidden px-6 py-24 text-center sm:px-10",
+          )}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-full bg-(image:--db-glow-lavender)"
           />
-        </div>
+          <SectionHeading line1="Start building," line2="for free." />
+
+          <p className="mb-8 mt-4 text-sm leading-relaxed text-db-muted">
+            Get 10 free generations on sign up. No credit card required.
+            <br />
+            upgrade when you&apos;re ready.
+          </p>
+          <SignInButton mode="modal">
+            <Button
+              size="lg"
+              className="relative h-11 rounded-[12px] bg-(image:--db-accent) px-8 text-[15px] font-[520] tracking-[-0.0127em] text-db-on-accent shadow-(--db-accent-shadow) hover:brightness-107 active:scale-[0.98]"
+            >
+              Get started free
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </SignInButton>
+        </Reveal>
       </section>
 
-      <section className="relative mx-auto mb-32 max-w-5xl overflow-hidden rounded-2xl border border-white/8 px-6 sm:px-10 py-24 text-center">
-        <SectionHeading gray="Start building," blue="for free." />
-
-        <p className="mb-8 text-sm leading-relaxed text-white/40">
-          Get 10 free generations on sign up. No credit card required.
-          <br />
-          upgrade when you&apos;re ready.
-        </p>
-        <SignInButton mode="modal">
-          <Button
-            size="lg"
-            className={"relative h-11 rounded-full bg-white px-8"}
-          >
-            Get started free
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </SignInButton>
-      </section>
-
-      <footer className="relative z-10 border-t border-white/7 py-12 mx-auto px-6 flex flex-wrap items-center justify-center text-stone-400">
+      <footer className="relative z-10 mx-auto flex flex-wrap items-center justify-center border-t border-white/7 px-6 py-12 text-sm text-db-muted">
         Made by jadhavsahilcodes@(dot)com
       </footer>
     </main>
