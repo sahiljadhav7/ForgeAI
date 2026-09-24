@@ -34,6 +34,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
+          // richColors toasts: warm red errors and neutral successes on the
+          // Daybreak surface, instead of sonner's own red and green fills.
+          "--error-bg": "var(--popover)",
+          "--error-text": "var(--destructive)",
+          "--error-border": "color-mix(in srgb, var(--destructive) 40%, transparent)",
+          "--success-bg": "var(--popover)",
+          "--success-text": "var(--popover-foreground)",
+          "--success-border": "var(--border)",
         } as React.CSSProperties
       }
       toastOptions={{

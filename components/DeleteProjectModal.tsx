@@ -66,7 +66,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
         <DialogFooter className="gap-2">
           <DialogClose
             render={
-              <Button variant="outline" className="h-9 rounded-full px-4" />
+              <Button variant="outline" className="rounded-full px-4" />
             }
           >
             Cancel
@@ -74,7 +74,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
           <Button
             onClick={handleDelete}
             disabled={isPending}
-            className="h-9 rounded-full bg-db-danger px-4 font-semibold text-db-base hover:bg-db-danger/90"
+            className="rounded-full bg-db-danger px-4 font-semibold text-db-base hover:bg-db-danger/90"
           >
             {isPending && <Loader2 className="size-3.5 animate-spin" />}
             Delete

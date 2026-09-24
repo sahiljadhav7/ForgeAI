@@ -7,7 +7,11 @@ import PricingModal from "./PricingModal";
 import RisingSunMark from "./brand/RisingSunMark";
 import { checkUser } from "@/lib/checkUser";
 import { cn } from "@/lib/utils";
-import { accentPillClass, focusRingWithinClass } from "./reusable";
+import {
+  accentPillClass,
+  focusRingWithinClass,
+  secondaryPillClass,
+} from "./reusable";
 
 // The app-wide header: the landing nav's sibling in the Daybreak palette.
 // Height stays 64px (h-16) so pages' mt-16 offsets keep working.
@@ -48,14 +52,19 @@ const Header = async () => {
             <>
               <Link
                 href={"/projects"}
-                className="text-[13px] font-medium text-db-muted transition-[color] hover:text-db-text"
+                className="text-sm font-medium text-db-muted transition-[color] hover:text-db-text"
               >
                 Projects
               </Link>
 
               {user && (
                 <PricingModal>
-                  <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-db-border bg-db-surface px-3 text-[13px] font-medium whitespace-nowrap text-db-text transition-colors hover:border-db-accent/40">
+                  <span
+                    className={cn(
+                      secondaryPillClass,
+                      "inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium whitespace-nowrap",
+                    )}
+                  >
                     <Zap className="size-3 fill-db-accent text-db-accent" />
                     {user.credits} credits
                   </span>
@@ -69,7 +78,7 @@ const Header = async () => {
               <SignInButton mode="modal">
                 <button
                   type="button"
-                  className="text-[13px] font-medium whitespace-nowrap text-db-muted transition-[color] hover:text-db-text"
+                  className="text-sm font-medium whitespace-nowrap text-db-muted transition-[color] hover:text-db-text"
                 >
                   Sign in
                 </button>

@@ -1,22 +1,10 @@
 import type { ClerkProvider } from "@clerk/nextjs";
 import type { ComponentProps } from "react";
+import { DB_LITERALS } from "./daybreak-literals";
 
 type ClerkAppearance = NonNullable<
   ComponentProps<typeof ClerkProvider>["appearance"]
 >;
-
-// Clerk derives hover, border and shadow shades from `variables`, so those
-// must be literal CSS colours. They mirror the .daybreak tokens in
-// app/globals.css. `elements` are plain CSS on nodes rendered inside <body>,
-// which carries .daybreak, so they use the tokens directly.
-const DB_LITERALS = {
-  surfaceSolid: "#2c272d", // --db-surface-solid
-  border: "rgba(214, 228, 255, 0.14)", // --db-border
-  accent: "#f49d70", // --db-accent-solid
-  onAccent: "#14111c", // --db-on-accent
-  text: "#f6f1ec", // --db-text
-  muted: "#98999c", // --db-muted
-};
 
 // The peach gradient fill with dark text.
 const accentFill = {
@@ -32,10 +20,9 @@ const accentButton = {
   boxShadow: "var(--db-accent-shadow)",
 };
 
-// The header's focus ring (components/Header.tsx, accentPillClass). Ticket 07
-// reconciles it with the landing composer's ring.
+// The Daybreak focus ring (focusRingClass in components/reusable.tsx).
 const focusRing = {
-  outline: "2px solid var(--db-accent-solid)",
+  outline: "2px solid var(--db-ring)",
   outlineOffset: "3px",
 };
 
@@ -47,6 +34,9 @@ const focusRing = {
 // styles are unlayered and would beat Tailwind v4's layered utilities. Where
 // Clerk's rule outranks a single class, `&&` doubles the class to win.
 export const daybreakAppearance: ClerkAppearance = {
+  // Clerk derives hover, border and shadow shades from `variables`, so they
+  // are literal colours. `elements` sit inside <body>, which carries
+  // .daybreak, so they use the tokens directly.
   variables: {
     colorPrimary: DB_LITERALS.accent,
     colorPrimaryForeground: DB_LITERALS.onAccent,
@@ -59,7 +49,7 @@ export const daybreakAppearance: ClerkAppearance = {
     // No colorBorder here: Clerk scales its alpha down for input and divider
     // borders, and --db-border's 14% would vanish. The neutral-derived
     // default reads the same.
-    colorRing: DB_LITERALS.accent,
+    colorRing: DB_LITERALS.ring,
     fontFamily: "var(--font-inter), Inter, sans-serif",
     fontFamilyButtons: "var(--font-inter), Inter, sans-serif",
     // Buttons and inputs use this base. Clerk scales it up for cards, so the
@@ -92,8 +82,10 @@ export const daybreakAppearance: ClerkAppearance = {
     },
     formFieldInput: {
       "&&:focus-visible, &&:focus": {
-        borderColor: "var(--db-accent-solid)",
-        boxShadow: "0 0 0 3px var(--db-ring)",
+        borderColor: "var(--db-ring)",
+        // The ring at ~50%, like shadcn's inputs (ring-ring/50).
+        boxShadow:
+          "0 0 0 3px color-mix(in srgb, var(--db-ring) 50%, transparent)",
       },
     },
     formButtonPrimary: {

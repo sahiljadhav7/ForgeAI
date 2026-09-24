@@ -1,15 +1,16 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-// The Daybreak focus ring: a solid 2px peach outline, offset from the element.
+// The Daybreak focus ring (--db-ring, the landing composer's): a solid 2px
+// peach outline, offset from the element. shadcn's Button draws the same one.
 export const focusRingClass =
-  "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-db-accent";
+  "focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-solid focus-visible:outline-db-ring";
 
 // The same ring for every focused descendant, for wrappers whose controls
 // are rendered by another component (Clerk, PricingModal's trigger). Rounded
 // so it hugs pills and round avatars.
 export const focusRingWithinClass =
-  "[&_:focus-visible]:rounded-full [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-3 [&_:focus-visible]:outline-db-accent";
+  "[&_:focus-visible]:rounded-full [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-3 [&_:focus-visible]:outline-solid [&_:focus-visible]:outline-db-ring";
 
 // Daybreak display heading type: Inter display in warm white.
 export const displayHeadingClass =

@@ -31,10 +31,8 @@ import {
   secondaryPillClass,
 } from "@/components/reusable";
 import { cn } from "@/lib/utils";
-import {
-  SANDPACK_LITERALS,
-  daybreakSandpackTheme,
-} from "@/lib/sandpack-theme";
+import { daybreakSandpackTheme } from "@/lib/sandpack-theme";
+import { DB_LITERALS } from "@/lib/daybreak-literals";
 import type { FileData, StatusStep } from "@/types/workspace";
 import {
   EXPORT_README,
@@ -52,13 +50,13 @@ const PLACEHOLDER_FILES = {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "${SANDPACK_LITERALS.base}",
+      background: "${DB_LITERALS.base}",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontFamily: "system-ui, sans-serif",
     }}>
-      <div style={{ textAlign: "center", color: "${SANDPACK_LITERALS.muted}" }}>
+      <div style={{ textAlign: "center", color: "${DB_LITERALS.muted}" }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>⚡</div>
         <p style={{ fontSize: 14 }}>Your app will appear here</p>
       </div>
@@ -113,15 +111,11 @@ interface CodePanelProps {
 // Line tabs: muted when inactive, warm white with a peach underline when
 // active. The underline sits on the bar's bottom border; it is positioned
 // here because shadcn's `group-data-horizontal` variants never match Base
-// UI's `data-orientation`. shadcn's faint ring is swapped for the Daybreak
-// focus ring.
-const tabTriggerClass = cn(
-  "h-full px-3 text-db-muted hover:text-db-text data-active:text-db-text after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-db-accent",
-  focusRingClass,
-  // Inset, since the tab fills the bar's height and an outset ring would be
-  // clipped by the global header.
-  "focus-visible:-outline-offset-2 focus-visible:border-transparent focus-visible:ring-0",
-);
+// UI's `data-orientation`. The focus ring (from TabsTrigger) is inset, since
+// the tab fills the bar's height and an outset ring would be clipped by the
+// global header.
+const tabTriggerClass =
+  "h-full px-3 text-db-muted hover:text-db-text data-active:text-db-text after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-db-accent focus-visible:-outline-offset-2";
 
 // "Improve with Agent": a lavender→peach wash with a lavender edge.
 const improveClass =
@@ -437,7 +431,7 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
               </p>
               {/* --db-muted drops under 4.5:1 where the overlay covers a
                   light preview, so this line is dimmed warm white. */}
-              <p className="text-xs text-db-text/75">
+              <p className="text-xs text-db-text-dim">
                 This usually takes 10–20 seconds
               </p>
             </div>
@@ -492,14 +486,14 @@ root.render(<React.StrictMode><App /></React.StrictMode>);`,
         !isGenerating &&
         !isImproving &&
         activeTab === "preview" && (
-          <div className="absolute inset-x-0 -bottom-3 z-20 border-t border-db-danger/40 bg-(--db-surface-solid) p-4 pb-6">
+          <div className="absolute inset-x-0 bottom-0 z-20 border-t border-db-danger/40 bg-db-surface-solid p-4">
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-db-danger" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium text-db-danger">
                   Preview error
                 </p>
-                <p className="break-all text-xs text-db-text/80">
+                <p className="break-all text-xs text-db-text-dim">
                   {previewError}
                 </p>
               </div>
@@ -551,7 +545,9 @@ export function CodePanel({
   const filePathKey = Object.keys(files).sort().join("|");
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    // Relative, so the preview error bar pins to this panel's bottom edge
+    // instead of spanning the viewport over the chat column.
+    <div className="relative flex flex-1 flex-col overflow-hidden">
       <SandpackProvider
         key={filePathKey}
         template="react"

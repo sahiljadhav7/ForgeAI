@@ -34,12 +34,14 @@
   /* Daybreak palette (defined under .daybreak below). */
   --color-db-base: var(--db-base);
   --color-db-surface: var(--db-surface);
+  --color-db-surface-solid: var(--db-surface-solid);
   --color-db-surface-raised: var(--db-surface-raised);
   --color-db-border: var(--db-border);
   --color-db-accent: var(--db-accent-solid);
   --color-db-on-accent: var(--db-on-accent);
   --color-db-lavender: var(--db-lavender);
   --color-db-text: var(--db-text);
+  --color-db-text-dim: var(--db-text-dim);
   --color-db-muted: var(--db-muted);
   --color-db-danger: var(--db-danger);
   --color-db-ring: var(--db-ring);
@@ -104,8 +106,8 @@
 /* Daybreak "dawn dusk" palette, taken from the landing hero (design.md).
    Scoped to .daybreak, which <body> carries (app/layout.tsx), so it applies
    on every route. Tailwind names: bg-db-base, bg-db-surface,
-   bg-db-surface-raised, text-db-text, text-db-muted, text-db-lavender,
-   text-db-danger, ring-db-ring, rounded-db; gradients are bg-(image:--db-accent) / bg-(image:--db-glow-*). */
+   bg-db-surface-solid, bg-db-surface-raised, text-db-text, text-db-text-dim, text-db-muted, text-db-lavender,
+   text-db-danger, outline-db-ring, rounded-db; gradients are bg-(image:--db-accent) / bg-(image:--db-glow-*). */
 @layer base {
   .daybreak {
     --db-base: #14111c;
@@ -128,11 +130,17 @@
     --db-lavender: #9c86ce;
     --db-text: #f6f1ec;
     --db-muted: #98999c;
+    /* Secondary text under 14px on a surface, where --db-muted is too faint
+     (spec § Accessibility): --db-text at 75%, 8.0:1 on --db-surface-solid,
+     and still AA where it sits over a light preview. */
+    --db-text-dim: rgba(246, 241, 236, 0.75);
     /* Warm red for destructive actions and errors: 6.1:1 on --db-base,
      4.8:1 on --db-surface-solid. Used as shadcn's --destructive. */
     --db-danger: #ef6a55;
-    /* Focus ring: --db-accent-solid at 50% alpha. Used as shadcn's --ring. */
-    --db-ring: rgba(244, 157, 112, 0.5);
+    /* The one focus ring colour, the landing composer's (design.md): a solid
+     2px outline at 3px offset (focusRingClass in components/reusable.tsx).
+     Also shadcn's --ring, whose `ring-ring/50` halos land at ~50% peach. */
+    --db-ring: #f8b285;
     /* Code syntax colours for strings (a warm green) and numbers/constants (a
      muted amber), 10.4:1 and 9.1:1 on --db-base. Sandpack takes literals, so
      lib/sandpack-theme.ts mirrors them. */
@@ -181,7 +189,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
 
   /* No bg-background/text-foreground here: body's .daybreak class sets its
@@ -191,6 +199,15 @@
     font-synthesis: none;
     text-rendering: geometricPrecision;
   }
+}
+
+/* Sandpack's controls (preview refresh, editor tabs, file explorer) and the
+   code panel's tab panels have no visible focus of their own. Give them the
+   Daybreak ring, inset since they fill the panel. The .daybreak prefix
+   outranks Sandpack's injected single-class rules. */
+.daybreak .sp-layout :focus-visible {
+  outline: 2px solid var(--db-ring);
+  outline-offset: -2px;
 }
 
 @keyframes blink {

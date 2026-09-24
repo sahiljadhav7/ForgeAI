@@ -276,7 +276,7 @@ export default function Home() {
             <SignInButton mode="modal">
               <Button
                 size="lg"
-                className="relative h-11 rounded-[12px] bg-(image:--db-accent) px-8 text-[15px] font-[520] tracking-[-0.0127em] text-db-on-accent shadow-(--db-accent-shadow) hover:brightness-107 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:border-transparent focus-visible:outline-solid focus-visible:outline-[#f8b285] focus-visible:ring-0 active:scale-[0.98]"
+                className="relative h-11 rounded-[12px] bg-(image:--db-accent) px-8 text-[15px] font-[520] tracking-[-0.0127em] text-db-on-accent shadow-(--db-accent-shadow) hover:brightness-107 active:scale-[0.98]"
               >
                 Get started free
                 <ChevronRight className="h-4 w-4" />

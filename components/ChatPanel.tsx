@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import RisingSunMark from "@/components/brand/RisingSunMark";
 import { Message, StatusStep } from "@/types/workspace";
 import {
   accentPillClass,
@@ -43,11 +43,11 @@ interface ChatPanelProps {
   onStop: () => void;
 }
 
-// shadcn's Button sets outline-none and its own faint ring; swap both for the
-// Daybreak focus ring.
-const buttonFocusClass = cn(
-  focusRingClass,
-  "focus-visible:outline-solid focus-visible:ring-0",
+// The assistant's avatar: the Daybreak mark on a raised tile.
+const AssistantAvatar = () => (
+  <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md bg-db-surface-raised">
+    <RisingSunMark className="size-4" />
+  </div>
 );
 
 const getSupabaseClient = () => {
@@ -201,7 +201,7 @@ const ChatPanel = ({
       >
         {messages.length === 0 && !isGenerating && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-center text-xs text-db-muted">
+            <p className="text-center text-xs text-db-text-dim">
               Describe what you want to build
             </p>
           </div>
@@ -244,19 +244,13 @@ const ChatPanel = ({
                   </div>
                 ) : (
                   <div className="flex items-start gap-2">
-                    <Image
-                      src="/logo-short.jpeg"
-                      alt="Daybreak"
-                      width={24}
-                      height={24}
-                      className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
-                    />
+                    <AssistantAvatar />
                     <div className="min-w-0 rounded-2xl rounded-tl-sm border border-db-border bg-db-surface px-3.5 py-2.5">
                       {isLiveStream && !msg.content ? (
                         // Empty placeholder — show Cline thinking indicator
                         <div className="flex items-center gap-2">
-                          <Wand2 className="h-3 w-3 shrink-0 text-db-lavender animate-pulse" />
-                          <span className="text-[12px] text-db-lavender animate-pulse">
+                          <Wand2 className="h-3 w-3 shrink-0 text-db-lavender motion-safe:animate-pulse" />
+                          <span className="text-[12px] text-db-lavender motion-safe:animate-pulse">
                             Cline is thinking…
                           </span>
                         </div>
@@ -270,9 +264,9 @@ const ChatPanel = ({
                               Agent reasoning
                             </span>
                           </div>
-                          <p className="text-[12px] leading-relaxed text-db-text/75 wrap-break-word">
+                          <p className="text-[12px] leading-relaxed text-db-text-dim wrap-break-word">
                             {msg.content}
-                            <span className="ml-0.5 inline-block h-3 w-0.5 animate-[blink_1s_ease-in-out_infinite] bg-db-accent align-middle" />
+                            <span className="ml-0.5 inline-block h-3 w-0.5 motion-safe:animate-[blink_1s_ease-in-out_infinite] bg-db-accent align-middle" />
                           </p>
                         </div>
                       ) : (
@@ -291,13 +285,7 @@ const ChatPanel = ({
           {/* Status steps - shown while generating */}
           {isGenerating && (
             <div className="flex items-start gap-2">
-              <Image
-                src="/logo-short.jpeg"
-                alt="Daybreak"
-                width={24}
-                height={24}
-                className="mt-0.5 h-6 w-6 shrink-0 rounded-md"
-              />
+              <AssistantAvatar />
               <div className="rounded-2xl rounded-tl-sm border border-db-border bg-db-surface px-3.5 py-3">
                 <div className="space-y-2">
                   {statusLog.map((step, i) => (
@@ -314,7 +302,7 @@ const ChatPanel = ({
                           "text-[12px] transition-colors duration-300",
                           step.status === "running"
                             ? "text-db-text"
-                            : "text-db-muted",
+                            : "text-db-text-dim",
                         )}
                       >
                         {step.label}
@@ -377,8 +365,8 @@ const ChatPanel = ({
             Daybreak radius, and the peach ring while the textarea has focus. */}
         <div
           className={cn(
-            "rounded-db bg-db-surface inset-ring inset-ring-db-border backdrop-blur-md transition-[opacity,box-shadow]",
-            "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-3 has-[textarea:focus-visible]:outline-db-accent",
+            "rounded-db bg-db-surface inset-ring inset-ring-db-border transition-[opacity,box-shadow]",
+            "has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-3 has-[textarea:focus-visible]:outline-db-ring",
             isGenerating || isImproving || noCredits
               ? "opacity-60"
               : "hover:inset-ring-db-accent/40",
@@ -390,6 +378,7 @@ const ChatPanel = ({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGenerating || isImproving || noCredits}
+            aria-label="Ask AI to modify your app"
             placeholder={
               noCredits
                 ? "Upgrade to keep building"
@@ -407,14 +396,11 @@ const ChatPanel = ({
           <div className="flex items-center justify-between px-2.5 pb-2.5">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               onClick={() => fileRef.current?.click()}
               disabled={isGenerating || isImproving || isUploading || noCredits}
               aria-label="Attach image"
-              className={cn(
-                "h-8 w-8 rounded-full text-db-muted hover:bg-db-surface-raised hover:text-db-text disabled:opacity-40",
-                buttonFocusClass,
-              )}
+              className="rounded-full text-db-muted hover:bg-db-surface-raised hover:text-db-text disabled:opacity-40"
             >
               {isUploading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -434,12 +420,10 @@ const ChatPanel = ({
             {isGenerating || isImproving ? (
               <Button
                 variant="secondary"
+                size="icon-sm"
                 onClick={onStop}
                 aria-label="Stop generating"
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full active:scale-95",
-                  buttonFocusClass,
-                )}
+                className="rounded-full active:scale-95"
               >
                 <Square className="h-3 w-3 fill-current" />
               </Button>
@@ -447,19 +431,16 @@ const ChatPanel = ({
               <Button
                 onClick={handleSubmit}
                 disabled={!canSubmit}
+                size="icon-sm"
                 aria-label="Send"
-                className={cn(
-                  accentPillClass,
-                  "flex h-8 w-8 items-center justify-center",
-                  buttonFocusClass,
-                )}
+                className={accentPillClass}
               >
                 <ArrowUp className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
         </div>
-        <p className="mt-1.5 text-center text-[10px] text-db-muted">
+        <p className="mt-1.5 text-center text-[10px] text-db-text-dim">
           {isGenerating || isImproving
             ? "click ⬜ to stop generation"
             : "⏎ to send. shift + ⏎ for new line"}

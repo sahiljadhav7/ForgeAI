@@ -47,7 +47,7 @@ export function ProjectCard({ projects }: ProjectCardProps) {
               </p>
             )}
 
-            <div className="mt-auto flex items-center gap-3 border-t border-db-border pt-3 text-xs text-db-muted">
+            <div className="mt-auto flex items-center gap-3 border-t border-db-border pt-3 text-sm text-db-muted">
               <span className="flex items-center gap-1">
                 <MessageSquare className="size-3" />
                 {msgCount} message{msgCount !== 1 ? "s" : ""}
