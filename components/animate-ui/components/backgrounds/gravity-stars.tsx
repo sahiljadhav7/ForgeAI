@@ -289,9 +289,12 @@ function GravityStarsBackground({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    updateStars();
-    drawStars(ctx);
-    animRef.current = requestAnimationFrame(animate);
+    const tick = () => {
+      updateStars();
+      drawStars(ctx);
+      animRef.current = requestAnimationFrame(tick);
+    };
+    tick();
   }, [updateStars, drawStars]);
 
   React.useEffect(() => {
