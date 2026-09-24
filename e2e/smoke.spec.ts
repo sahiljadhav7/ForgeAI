@@ -13,6 +13,16 @@ function trackPageErrors(page: Page) {
   return errors;
 }
 
+// Clerk's modals exist only once clerk-js has loaded. Before that, submit
+// falls back to navigating to sign-in (a deliberate path, see ticket 05).
+async function waitForClerk(page: Page) {
+  await page.waitForFunction(
+    () => (window as unknown as { Clerk?: { loaded?: boolean } }).Clerk?.loaded === true,
+    undefined,
+    { timeout: 15_000 },
+  );
+}
+
 const composer = (page: Page) => page.getByRole("textbox", { name: "Describe your app" });
 const sendButton = (page: Page) => page.getByRole("button", { name: "Build it" });
 const chips = (page: Page) => page.locator("form button[type=button]");
@@ -60,6 +70,7 @@ test.describe("landing page", () => {
 
   test("Enter while signed out opens the sign-in modal and keeps the prompt", async ({ page }) => {
     await page.goto("/");
+    await waitForClerk(page);
     await composer(page).fill("A recipe box with tags");
     await composer(page).press("Enter");
 
@@ -89,6 +100,7 @@ test.describe("landing nav, desktop", () => {
 
   test("Get Started opens the sign-up modal", async ({ page }) => {
     await page.goto("/");
+    await waitForClerk(page);
     await page.getByRole("banner").getByRole("button", { name: "Get Started" }).first().click();
     await expect(page.locator(".cl-modalContent .cl-signUp-root")).toBeVisible({ timeout: 15_000 });
   });
