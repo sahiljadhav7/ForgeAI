@@ -7,7 +7,6 @@ import {
   accentPillClass,
   focusRingClass,
   focusRingWithinClass,
-  secondaryPillClass,
 } from "./reusable";
 import PricingModal from "./PricingModal";
 import { cn } from "@/lib/utils";
@@ -174,23 +173,23 @@ const ChatPanel = ({
           {appTitle}
         </span>
         <PricingModal reason={noCredits ? "credits" : "upgrade"}>
-          <span
-            className={cn(
-              secondaryPillClass,
-              "inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium whitespace-nowrap",
-              noCredits &&
-                "border-db-danger/40 text-db-danger hover:border-db-danger/70",
-            )}
-          >
+          <span className="inline-flex h-8 items-center gap-1.5 text-[13px] whitespace-nowrap text-db-text-dim transition-colors hover:text-db-text">
             <Zap
               className={cn(
                 "size-3",
-                noCredits ? "text-db-danger" : "fill-db-accent text-db-accent",
+                noCredits ? "text-db-danger" : "text-db-accent",
               )}
             />
-            {noCredits
-              ? "No credits. Upgrade"
-              : `${credits} credit${credits !== 1 ? "s" : ""}`}
+            {noCredits ? (
+              <span className="text-db-danger">0 credits</span>
+            ) : (
+              <span>
+                <span className="font-medium text-db-text tabular-nums">
+                  {credits}
+                </span>{" "}
+                credit{credits !== 1 ? "s" : ""}
+              </span>
+            )}
           </span>
         </PricingModal>
       </div>
