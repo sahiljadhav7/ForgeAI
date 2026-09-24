@@ -1,6 +1,6 @@
 # 03 — Rename in-app text from ForgeAI/Forge to Daybreak
 
-Status: ready-for-agent
+Status: done
 Blocked by: none
 Spec: `.scratch/new-frontend/spec.md` § Rename to Daybreak
 
@@ -28,3 +28,44 @@ Replace the old brand in everything users see or download. Infrastructure (domai
 - The browser tab on non-landing pages reads "… · Daybreak" or "Daybreak".
 - The grep in the last task returns only the allowed hits.
 - `npm test` and `npm run build` pass. Update any test fixtures that assert on the old strings.
+
+## Comments
+
+**2026-09-24 (Claude):** Implemented on `feat/new-frontend`.
+
+**What changed**
+- `app/layout.tsx` metadata: `title: { template: "%s · Daybreak", default: "Daybreak" }`, description "Daybreak turns a written description into a working React app."
+- `components/ChatPanel.tsx`: both assistant avatar alts are now "Daybreak".
+- ZIP export: the package.json, README and filename logic moved out of `components/CodePanel.tsx` into a new pure module, `lib/exportZip.ts` (`exportZipFileName`, `buildExportPackageJson`, `EXPORT_README`). The package name is `daybreak-app`. The README reads "# Daybreak App" / "Generated with Daybreak." and has no link. The fallback filename is `daybreak-app.zip`. The inline `index.html` title in `CodePanel.tsx` is now "Daybreak App". CRLF line endings are kept.
+- `lib/constants.ts`: "Access to Daybreak Pro Agent".
+- `README.md`: the H1, both image alts and the intro sentence say Daybreak. The forgeai.lol demo link and the GitHub repo link are unchanged.
+- `app/(landing)/page.tsx` had two grep hits. "Forge your dream" is now "Build your dream". The mockup URL bar `forge.app/workspace` (a domain we don't own) is now `daybreak / workspace`. Tickets 04 and 06 rewrite both areas anyway.
+
+**Decisions**
+- TDD on the extracted export logic, in 5 red→green slices: `lib/exportZip.test.ts`, 5 tests. The user was away, so I picked the seam myself: the three exports of `lib/exportZip.ts`.
+- Small behaviour fix found by TDD: a title that slugifies to an empty string (e.g. "!!! ???") used to produce `.zip`. It now falls back to `daybreak-app.zip`.
+- Mockup URL bar: I first used `forgeai.lol/workspace`, since that is the real URL and allowed by the grep. Both reviewers pointed out that it still shows the old brand, so I changed it to a neutral `daybreak / workspace` that doesn't claim a domain.
+- The `index.html` and `src/index.js` templates stay inline in `CodePanel.tsx` to keep the diff small.
+
+**Verification**
+- `npm run lint`: 12 problems (2 errors, 10 warnings), the same as the baseline. The errors are only in `gravity-stars.tsx` and `stars.tsx`. The warnings in the touched files (unused vars, `<img>`) all existed before this change.
+- `npm test`: 3 files, 16/16 pass (11 existing + 5 new). `npm run build`: passes.
+- Re-grep (`grep -rni forge`, excluding node_modules, .next, .git, lib/generated, package-lock.json, and the `.scratch`/`.claude` docs): only `README.md:3` (forgeai.lol demo URL and repo link) and `scripts/capture-readme-visuals.mjs:5`.
+- `run-app` (prod build, 1440x900): `/`, `/sign-in`, `/sign-up` and `/does-not-exist` all serve `<title>Daybreak</title>` and the new description. The landing screenshot shows "Build your dream". No page errors. The only failed requests are the 2 expected Clerk 400s. The server was stopped and port 3100 confirmed free.
+
+**Review findings (/code-review)**
+- Standards: no hard violations, CRLF confirmed on both panels. Judgement calls:
+  - Duplicated `"daybreak-app"` literal in `lib/exportZip.ts` → fixed with a `PACKAGE_NAME` const.
+  - Shotgun Surgery on the brand string across 6 files (suggested an `APP_NAME` constant) → not done. The spec lists each literal site, and a one-time rename doesn't justify a new abstraction.
+  - Half-finished extraction (index.html and index.js still inline) → left as is to keep the diff small. Could be moved later.
+  - `exportZipFileName` naming, and no explicit return type on `buildExportPackageJson` → left as is (minor).
+- Spec: everything required is present. Handled:
+  - Mockup URL showing forgeai.lol → changed (see Decisions).
+  - The `/forge/i` assertion in the new test was itself a grep hit → removed. The no-URL assertion already covers "no forge.app link".
+  - `public/project1ForgeAi.mp4` (tracked, referenced nowhere, no ticket renames it) → left alone. It's a filename, not text users see, and the ticket's content grep doesn't match it. **Owner decision:** delete or rename it.
+
+**Unverified / for later**
+- Signed-in `/workspace` (ChatPanel alts, ZIP export download) and the Pro plan feature text were not checked visually, because Clerk `pk_live` keys only work on forgeai.lol. Unit tests cover the ZIP contents and filename.
+- No page sets its own `title`, so today every page shows "Daybreak". The `%s · Daybreak` template only takes effect once a page exports a title.
+- The header wordmark (`/logo.png`) still shows "<forge>". That's out of scope per the spec (follow-up once a Daybreak logo exists).
+- Pre-existing (from ticket 01): `app/not-found.tsx` renders its own `<title>404: This page could not be found.</title>`, so 404 pages have two `<title>` tags. Worth fixing in ticket 07.

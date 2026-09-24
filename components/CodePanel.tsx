@@ -27,6 +27,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PricingModal from "@/components/PricingModal";
 import type { FileData, StatusStep } from "@/types/workspace";
+import {
+  EXPORT_README,
+  buildExportPackageJson,
+  exportZipFileName,
+} from "@/lib/exportZip";
 
 // ─── Placeholder ──────────────────────────────────────────────────────────────
 
@@ -203,25 +208,7 @@ function SandpackInner({
 
       const zip = new JSZip();
 
-      const packageJson = {
-        name: "forge-app",
-        version: "1.0.0",
-        private: true,
-        dependencies: {
-          react: "^18.2.0",
-          "react-dom": "^18.2.0",
-          "react-scripts": "5.0.1",
-          ...dependencies,
-        },
-        scripts: {
-          start: "react-scripts start",
-          build: "react-scripts build",
-        },
-        browserslist: {
-          production: [">0.2%", "not dead", "not op_mini all"],
-          development: ["last 1 chrome version"],
-        },
-      };
+      const packageJson = buildExportPackageJson(dependencies);
       zip.file("package.json", JSON.stringify(packageJson, null, 2));
 
       zip.file(
@@ -231,7 +218,7 @@ function SandpackInner({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Forge App</title>
+    <title>Daybreak App</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
@@ -261,22 +248,13 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<React.StrictMode><App /></React.StrictMode>);`,
       );
 
-      zip.file(
-        "README.md",
-        `# Forge App\n\nGenerated with [Forge](https://forge.app).\n\n## Getting started\n\n\`\`\`bash\nnpm install\nnpm start\n\`\`\``,
-      );
+      zip.file("README.md", EXPORT_README);
 
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const zipName = appTitle
-        ? `${appTitle
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-|-$/g, "")}.zip`
-        : "forge-app.zip";
-      a.download = zipName;
+      a.download = exportZipFileName(appTitle);
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {

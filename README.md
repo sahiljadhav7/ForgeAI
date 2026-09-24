@@ -1,10 +1,10 @@
-# ForgeAI
+# Daybreak
 
 [Live Demo](https://www.forgeai.lol) | [Repository](https://github.com/sahiljadhav7/ForgeAI)
 
-![ForgeAI hero](./public/README-hero.png)
+![Daybreak hero](./public/README-hero.png)
 
-AI app builder that turns natural-language prompts into working React apps inside a live browser workspace. Users can generate an app, inspect the code, preview it instantly with Sandpack, iterate through chat, upload a reference image, and export the result as a ZIP.
+Daybreak is an AI app builder that turns natural-language prompts into working React apps inside a live browser workspace. Users can generate an app, inspect the code, preview it instantly with Sandpack, iterate through chat, upload a reference image, and export the result as a ZIP.
 
 This project was an attempt to build the layer around AI code generation that most demos skip: persistent workspaces, streaming UX, plan and credit controls, safe retries, and a preview environment that feels immediate instead of fragile.
 
@@ -20,7 +20,7 @@ This project was an attempt to build the layer around AI code generation that mo
 
 ## Workspace
 
-![ForgeAI workspace](./public/README-workspace.png)
+![Daybreak workspace](./public/README-workspace.png)
 
 The landing page includes a product mockup of the core workflow: prompt on the left, streamed assistant response in chat, and a live preview/code surface on the right.
 
