@@ -43,7 +43,7 @@ A final pass on the finished landing page. Check it against `design.md` at every
 
 ## Comments
 
-**2026-09-24 (Claude):** QA and polish done on `feat/new-frontend`, in commits `640af83` (QA fixes), `beeafff` (/simplify) and a final review-fix/docs commit.
+**2026-09-24 (Claude):** QA and polish done on `feat/new-frontend`, in commits `640af83` (QA fixes), `beeafff` (/simplify) and `768366b` (review fixes + docs).
 
 **What changed**
 - **Banner landmark.** The landing header used to sit inside `<main>`. It is now its own component (`app/(landing)/Nav.tsx`) and is rendered before `<main>`. `page.tsx`'s root is a `<div class="root daybreak">`. The header is placed absolutely over the stage at the frame padding, using the new `--pad-top/right/bottom/left` tokens that `.frame` also uses in all three layouts. A `.navSpace` of `--nav-h` holds its row inside the frame. The footer moved after `</main>` (contentinfo). Desktop geometry is identical to ticket 04's measurements.
