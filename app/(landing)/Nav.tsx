@@ -15,21 +15,24 @@ const NAV_LINKS = [
 ];
 
 // Nav CTA: Get Started (Clerk sign-up modal) when signed out, My projects
-// plus the avatar when signed in. Signed-out markup also covers Clerk's
-// loading state, so the CTA is in place on first paint.
+// plus the avatar when signed in. My projects is a plain nav link like
+// Features/Examples/Pricing; only Get Started is a pill. Signed-out markup
+// also covers Clerk's loading state, so the CTA is in place on first paint.
 function AuthActions({
   ctaClassName,
+  linkClassName,
   onNavigate,
 }: {
   ctaClassName: string;
+  linkClassName: string;
   onNavigate?: () => void;
 }) {
   const { isSignedIn } = useAuth();
   if (isSignedIn) {
     return (
       <>
-        <Link href="/projects" className={ctaClassName} onClick={onNavigate}>
-          <span>My projects</span>
+        <Link href="/projects" className={linkClassName} onClick={onNavigate}>
+          My projects
         </Link>
         <UserButton appearance={{ elements: { avatarBox: styles.avatar } }} />
       </>
@@ -83,7 +86,7 @@ export default function Nav() {
         </nav>
 
         <div className={styles.navRight}>
-          <AuthActions ctaClassName={styles.cta} />
+          <AuthActions ctaClassName={styles.cta} linkClassName={styles.link} />
         </div>
 
         <label htmlFor="landing-menu" className={styles.burger} aria-hidden="true">
@@ -102,7 +105,11 @@ export default function Nav() {
                 </a>
               ))}
               <div className={styles.sheetAuth}>
-                <AuthActions ctaClassName={styles.sheetCta} onNavigate={closeMenu} />
+                <AuthActions
+                  ctaClassName={styles.sheetCta}
+                  linkClassName={styles.sheetLink}
+                  onNavigate={closeMenu}
+                />
               </div>
             </div>
           </div>

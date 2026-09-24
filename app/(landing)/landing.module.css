@@ -240,6 +240,13 @@
   gap: calc(14 * var(--u));
 }
 
+/* Signed in, My projects is a .link beside the 36u avatar. navRight centres
+   it 3.5u above the other links (links-top 9.5 + half its 26u line box,
+   vs navRight's 1 + 18); a 7u top margin shifts that centre down onto them. */
+.navRight > .link {
+  margin-top: calc(7 * var(--u));
+}
+
 .cta {
   display: inline-flex;
   align-items: center;
