@@ -139,7 +139,7 @@ test.describe("other routes", () => {
   test("unknown URLs render the 404 page with the header and one title", async ({ page }) => {
     const response = await page.goto("/does-not-exist");
     expect(response?.status()).toBe(404);
-    await expect(page.getByText("This page could not be found.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "This page doesn't exist" })).toBeVisible();
     await expect(page.getByRole("banner")).toHaveCount(1);
     await expect(page.locator("main")).toHaveCount(1);
     await expect(page.locator("title")).toHaveCount(1);

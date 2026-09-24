@@ -5,10 +5,10 @@ import { PricingTable, SignInButton } from "@clerk/nextjs";
 import { ArrowRight, ChevronRight, Zap } from "lucide-react";
 import { SectionLabel, SectionHeading } from "@/components/reusable";
 import Reveal from "@/components/Reveal";
+import { pricingAppearance } from "@/lib/clerk-appearance";
 import { cn } from "@/lib/utils";
 import Hero from "./Hero";
 import Nav from "./Nav";
-import { pricingAppearance } from "./pricing-appearance";
 import styles from "./landing.module.css";
 
 export const metadata: Metadata = {

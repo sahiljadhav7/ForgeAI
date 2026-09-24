@@ -7,6 +7,7 @@ import PricingModal from "./PricingModal";
 import RisingSunMark from "./brand/RisingSunMark";
 import { checkUser } from "@/lib/checkUser";
 import { cn } from "@/lib/utils";
+import { accentPillClass } from "./reusable";
 
 // The app-wide header: the landing nav's sibling in the Daybreak palette.
 // Height stays 64px (h-16) so pages' mt-16 offsets keep working.
@@ -73,7 +74,10 @@ const Header = async () => {
               <SignUpButton mode="modal">
                 <button
                   type="button"
-                  className="inline-flex h-9 items-center rounded-full bg-(image:--db-accent) px-4 text-[13px] font-semibold whitespace-nowrap text-db-on-accent shadow-(--db-accent-shadow) transition-[filter,transform] hover:brightness-107 active:scale-95"
+                  className={cn(
+                    accentPillClass,
+                    "inline-flex h-9 items-center px-4 text-[13px] font-semibold whitespace-nowrap",
+                  )}
                 >
                   Get Started
                 </button>

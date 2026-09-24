@@ -149,6 +149,8 @@
     /* The hero's --e-soft curve. */
     --db-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --db-accent-shadow: 0 3px 12px rgba(210, 110, 60, 0.34);
+    /* The landing cards' drop shadow (landing.module.css), for Clerk cards. */
+    --db-card-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
 
     background-color: var(--db-base);
     color: var(--db-text);

@@ -1,6 +1,6 @@
 # 03 — Shared Clerk appearance, auth pages, pricing modal and 404
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 Spec: `.scratch/app-restyle/spec.md` § Shared pieces (Clerk appearance), § Page treatments (Auth pages, 404, Modals)
 
@@ -49,3 +49,27 @@ Theme every Clerk surface once, at the provider. Then give the auth pages and th
 - `npm run lint`, `npm test`, `npm run build` and `npm run test:e2e` pass.
 
 ## Comments
+
+**2026-09-24 (agent):** Done.
+- `lib/clerk-appearance.ts` replaces `app/(landing)/pricing-appearance.ts`.
+  - `daybreakAppearance` holds the `DB_LITERALS` variables plus elements for the card box and card, the header title and subtitle, the input focus, the primary button, footer links and social buttons. `ClerkProvider` in `app/layout.tsx` passes it.
+  - `pricingAppearance` holds only the pricing-card overrides plus `colorBorder`. Clerk layers a component's `appearance` over the provider's, so it doesn't spread the base. The landing pricing section is byte-identical before and after, at 1440×900 and 390×844.
+  - `colorBorder` isn't in the base. Clerk scales its alpha down for input and divider borders, and `--db-border`'s 14% made them invisible. The neutral-derived default reads right.
+- New token `--db-card-shadow` replaces the `cardShadow` literal.
+- The auth layout is a `min-h-dvh` flex-centred `<main>` with `py-20`, lavender glow high and peach glow low. The card is centred on the viewport, a touch above the space under the header.
+- `PricingModal`:
+  - `BlueTitle` is gone. The title is a `font-display` heading and the copy is capitalised.
+  - `cursor-pointer` is fixed.
+  - `pricingAppearance` is used, and `zIndex: 2000` is kept.
+  - The scroll button is on `--db-surface`/`--db-border`.
+  - The hardcoded `#0f0f0f` and white overrides are dropped, so the Dialog remap applies.
+  - Bug fix: `sm:max-w-[min(95vw,1100px)]`. shadcn's `sm:max-w-md` was clamping the intended 1100px to one column.
+- 404: a display heading, a muted line and the "Back home" pill over a lavender glow. The smoke test now looks for the heading by role and name.
+- `accentPillClass` in `components/reusable.tsx` (colour, shadow, focus ring, press) is shared by the Header's Get Started and the 404. The landing CTA, which has a 12px radius and a different ring, is untouched.
+- Clerk focus uses the header's ring (`--db-accent-solid`, 2px, offset 3). Ticket 07 still owns reconciling it with the composer's `#f8b285`.
+- Verified:
+  - Screenshots at 1440×900 and 390×844 of `/sign-in`, `/sign-up`, the landing sign-in modal, the 404, and `PricingModal`. The modal was opened on a temporary signed-out probe route, since removed. None of them show blue or purple.
+  - `scrollWidth` is 360 at 360px on `/sign-in`, `/sign-up` and the 404.
+  - lint (0 errors, 9 existing warnings), `npm test` (47), build and `test:e2e` (25 passed, 3 skipped) all pass.
+- Not verified: the `UserButton` popover and the checkout drawer both need a signed-in session, which writes to the production DB. They get the provider appearance, with its peach `colorPrimary`, and no overrides of their own. Ticket 07's signed-in pass should look at them.
+- For later tickets: the auth layout and the 404 now use the same glow `div`. If 04 adds more glows, consider a small `<Glow>` component. `BlueTitle` is still used by ChatPanel and projects.

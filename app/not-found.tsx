@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Header from "@/components/Header";
+import { accentPillClass } from "@/components/reusable";
+import { cn } from "@/lib/utils";
 
 // Rendered through the root layout's "%s · Daybreak" template, so the page
 // gets exactly one <title>.
@@ -7,24 +10,32 @@ export const metadata: Metadata = {
   title: "Page not found",
 };
 
-// Next's default 404 used to render inside the root layout's Header and
-// <main>. The root layout no longer provides them, so this page restores them
-// around a copy of the default 404 markup.
+// The root layout doesn't provide the Header or <main>, so this page renders
+// both around the Daybreak 404 message.
 const NotFound = () => {
   return (
     <>
       <Header />
-      <main className="flex h-screen flex-col items-center justify-center text-center">
-        <div>
-          <h1 className="mr-5 inline-block border-r border-white/30 pr-[23px] align-top text-2xl leading-[49px] font-medium">
-            404
-          </h1>
-          <div className="inline-block">
-            <h2 className="m-0 text-sm leading-[49px] font-normal">
-              This page could not be found.
-            </h2>
-          </div>
-        </div>
+      <main className="relative isolate flex min-h-dvh flex-col items-center justify-center px-4 py-24 text-center">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[70%] bg-(image:--db-glow-lavender)"
+        />
+        <h1 className="font-display text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.01em] text-db-text">
+          This page doesn&apos;t exist
+        </h1>
+        <p className="mt-4 max-w-sm text-sm leading-relaxed text-db-muted">
+          The link may be broken, or the page may have moved.
+        </p>
+        <Link
+          href="/"
+          className={cn(
+            accentPillClass,
+            "mt-8 inline-flex h-10 items-center px-5 text-sm font-semibold",
+          )}
+        >
+          Back home
+        </Link>
       </main>
     </>
   );

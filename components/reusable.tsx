@@ -16,6 +16,12 @@ export const BlueTitle = ({
   );
 };
 
+// The Daybreak accent pill's colour, shadow, focus ring and press feedback
+// (the header's Get Started, the 404's Back home). Callers add size, padding
+// and type.
+export const accentPillClass =
+  "rounded-full bg-(image:--db-accent) text-db-on-accent shadow-(--db-accent-shadow) transition-[filter,transform] hover:brightness-107 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-db-accent active:scale-95";
+
 // Daybreak section label: lavender, sentence case.
 export const SectionLabel = ({ children }: { children: React.ReactNode }) => {
   return (

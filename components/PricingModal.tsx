@@ -10,8 +10,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "./ui/dialog";
-import { BlueTitle } from "./reusable";
 import { PricingTable } from "@clerk/nextjs";
+import { pricingAppearance } from "@/lib/clerk-appearance";
 
 interface PricingModalProps {
   children: React.ReactNode;
@@ -22,11 +22,11 @@ const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const title =
-    reason == "credits" ? "You're out of credits" : "upgrade your plan";
+    reason === "credits" ? "You're out of credits" : "Upgrade your plan";
   const description =
     reason === "credits"
       ? "You've used all your credits. Upgrade to keep building."
-      : "choose a plan that fits how much you build.";
+      : "Choose a plan that fits how much you build.";
 
   const handleScrollDown = () => {
     contentRef.current?.scrollTo({
@@ -37,17 +37,15 @@ const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
 
   return (
     <Dialog>
-      <DialogTrigger className={"cursor-poiter"}>{children}</DialogTrigger>
+      <DialogTrigger className="cursor-pointer">{children}</DialogTrigger>
+      {/* The sm: max-width overrides Dialog's sm:max-w-md, which would
+          otherwise clamp the three-column table to one column. */}
       <DialogContent
-        className={
-          "border-white/8 bg-[#0f0f0f] p-0 text-white w-[min(95vw,1100px)] max-h-[90dvh] overflow-hidden"
-        }
+        className="w-[min(95vw,1100px)] max-h-[90dvh] overflow-hidden p-0 sm:max-w-[min(95vw,1100px)]"
       >
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle
-            className={"font-display text-xl tracking-tight text-white/90"}
-          >
-            <BlueTitle className="text-4xl">{title}</BlueTitle>
+          <DialogTitle className="font-display text-4xl leading-[1.1] tracking-[-0.01em] text-db-text">
+            {title}
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
@@ -57,6 +55,7 @@ const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
         >
           <div className="min-w-180 md:min-w-0">
             <PricingTable
+              appearance={pricingAppearance}
               checkoutProps={{
                 appearance: {
                   elements: {
@@ -72,7 +71,7 @@ const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
           <button
             type="button"
             onClick={handleScrollDown}
-            className="absolute bottom-3 right-3 z-10 rounded-full border border-white/15 bg-white/10 p-2 text-white/80 backdrop-blur transition hover:bg-white/20"
+            className="absolute bottom-3 right-3 z-10 rounded-full border border-db-border bg-db-surface p-2 text-db-text backdrop-blur transition-colors hover:bg-db-surface-raised"
             aria-label="Scroll down"
           >
             <ChevronDown className="h-4 w-4" />
