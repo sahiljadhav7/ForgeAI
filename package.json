@@ -11,7 +11,8 @@
     "test": "vitest run",
     "prisma": "prisma",
     "prisma:generate": "prisma generate",
-    "prisma:db:push": "prisma db push"
+    "prisma:db:push": "prisma db push",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@arcjet/next": "^1.12.0",
@@ -45,6 +46,7 @@
     "zod": "^4.6.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.13.4",
     "@types/react": "^19.3.0",
