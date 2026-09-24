@@ -1,6 +1,6 @@
 # Spec: Daybreak restyle for the rest of the app
 
-Status: ready-for-agent
+Status: done
 Branch: `feat/app-restyle` (branch from `main` after `feat/new-frontend` / PR #4 merges)
 
 ## Problem

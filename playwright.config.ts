@@ -8,6 +8,8 @@ const isCI = !!process.env.CI;
 // keys in the environment (.env.local locally, repository secrets in CI).
 export default defineConfig({
   testDir: "e2e",
+  // Only does anything for the opt-in signed-in tests (e2e/signed-in.ts).
+  globalSetup: "./e2e/global-setup.ts",
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
