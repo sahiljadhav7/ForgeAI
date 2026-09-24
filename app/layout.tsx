@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
-import { DM_Sans, Lora } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 
-const lora = Lora({
+// The variable class goes on <html>: globals.css defines --font-sans from
+// --font-inter on :root, which only resolves if --font-inter is set there.
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-serif",
-});
-
-const dmsans = DM_Sans({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  style: ["normal", "italic"],
+  axes: ["opsz"],
+  display: "block",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -35,12 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={`${lora.variable} ${dmsans.variable} font-sans`}>
+      <html lang="en" className={inter.variable} suppressHydrationWarning>
+        <body className="font-sans">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
-            enableSystem
+            forcedTheme="dark"
             disableTransitionOnChange
           >
             {children}

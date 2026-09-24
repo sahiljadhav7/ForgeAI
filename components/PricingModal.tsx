@@ -45,7 +45,7 @@ const PricingModal = ({ children, reason = "upgrade" }: PricingModalProps) => {
       >
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle
-            className={"font-serif text-xl tracking-tight text-white/90"}
+            className={"font-display text-xl tracking-tight text-white/90"}
           >
             <BlueTitle className="text-4xl">{title}</BlueTitle>
           </DialogTitle>

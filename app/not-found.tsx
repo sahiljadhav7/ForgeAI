@@ -8,7 +8,7 @@ const NotFound = () => {
     <>
       <title>404: This page could not be found.</title>
       <Header />
-      <main className="flex h-screen flex-col items-center justify-center text-center font-[system-ui,'Segoe_UI',Roboto,Helvetica,Arial,sans-serif]">
+      <main className="flex h-screen flex-col items-center justify-center text-center">
         <div>
           <h1 className="mr-5 inline-block border-r border-white/30 pr-[23px] align-top text-2xl leading-[49px] font-medium">
             404
