@@ -155,7 +155,7 @@ export default function Composer() {
         ref={textareaRef}
         name="prompt"
         rows={1}
-        aria-label="Describe the app you want to build"
+        aria-label="Describe your app"
         placeholder={PLACEHOLDERS[placeholderIndex]}
         className={styles.ph}
         value={prompt}

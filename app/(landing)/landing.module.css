@@ -69,6 +69,13 @@
     Arial, sans-serif;
   --font-display: var(--font-text);
 
+  /* Frame padding, shared by the hero frame and the nav laid over it. */
+  --pad-top: calc(var(--inset-top) * var(--vu));
+  --pad-right: calc(var(--brand-x) * var(--u));
+  --pad-bottom: calc(var(--inset-bottom) * var(--vu));
+  --pad-left: calc(var(--brand-x) * var(--u));
+
+  position: relative;
   font-family: var(--font-text);
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
@@ -148,8 +155,7 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: calc(var(--inset-top) * var(--vu)) calc(var(--brand-x) * var(--u))
-    calc(var(--inset-bottom) * var(--vu));
+  padding: var(--pad-top) var(--pad-right) var(--pad-bottom) var(--pad-left);
 }
 
 /* ───────── Nav ───────── */
@@ -160,9 +166,14 @@
   display: none;
 }
 
+/* The header lives outside <main> (banner landmark), so it's laid over the
+   stage at the frame's padding instead of being the frame's first row. */
 .nav {
-  position: relative;
-  flex: none;
+  position: absolute;
+  top: var(--pad-top);
+  left: var(--pad-left);
+  right: var(--pad-right);
+  z-index: 2;
   height: calc(43 * var(--u));
   display: flex;
   align-items: center;
@@ -348,6 +359,12 @@
 }
 
 /* ───────── Hero ───────── */
+
+/* Holds the nav's row in the frame, so the hero lays out as in design.md. */
+.navSpace {
+  flex: none;
+  height: calc(43 * var(--u));
+}
 
 .hero {
   flex: 1;
@@ -582,6 +599,7 @@
 
 /* ───────── Focus ───────── */
 
+.nav :focus-visible,
 .stage :focus-visible {
   outline: 2px solid #f8b285;
   outline-offset: 3px;
@@ -589,10 +607,10 @@
 
 /* design.md's 4px radius, applied only to controls without their own shape
    so the send circle, chips and CTA keep their outlines round. */
-.stage .brand:focus-visible,
-.stage .link:focus-visible,
+.nav .brand:focus-visible,
+.nav .link:focus-visible,
+.nav .sheetLink:focus-visible,
 .stage .cue:focus-visible,
-.stage .sheetLink:focus-visible,
 .stage .ph:focus-visible {
   border-radius: 4px;
 }
@@ -607,11 +625,10 @@
 @media (min-width: 600px) and (max-width: 1180px) and (min-height: 600px) {
   .root {
     --u: 1px;
-  }
-
-  .frame {
-    padding: clamp(24px, 3.4vh, 44px) clamp(28px, 4.2vw, 60px)
-      clamp(26px, 4.4vh, 56px);
+    --pad-top: clamp(24px, 3.4vh, 44px);
+    --pad-right: clamp(28px, 4.2vw, 60px);
+    --pad-bottom: clamp(26px, 4.4vh, 56px);
+    --pad-left: clamp(28px, 4.2vw, 60px);
   }
 
   .h1 {
@@ -688,13 +705,10 @@
 @media (max-width: 599px), (max-height: 599px) and (max-width: 1180px) {
   .root {
     --u: 1px;
-  }
-
-  .frame {
-    padding: max(18px, env(safe-area-inset-top))
-      max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-right))
-      max(20px, env(safe-area-inset-bottom))
-      max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-left));
+    --pad-top: max(18px, env(safe-area-inset-top));
+    --pad-right: max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-right));
+    --pad-bottom: max(20px, env(safe-area-inset-bottom));
+    --pad-left: max(clamp(18px, 5.2vw, 40px), env(safe-area-inset-left));
   }
 
   .links,
@@ -952,6 +966,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .nav *,
+  .nav *::before,
+  .nav *::after,
   .stage *,
   .stage *::before,
   .stage *::after {

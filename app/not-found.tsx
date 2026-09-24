@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
+
+// Rendered through the root layout's "%s · Daybreak" template, so the page
+// gets exactly one <title>.
+export const metadata: Metadata = {
+  title: "Page not found",
+};
 
 // Next's default 404 used to render inside the root layout's Header and
 // <main>. The root layout no longer provides them, so this page restores them
@@ -6,7 +13,6 @@ import Header from "@/components/Header";
 const NotFound = () => {
   return (
     <>
-      <title>404: This page could not be found.</title>
       <Header />
       <main className="flex h-screen flex-col items-center justify-center text-center">
         <div>
