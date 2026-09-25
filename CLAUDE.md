@@ -11,3 +11,7 @@ Default canonical roles: `needs-triage`, `needs-info`, `ready-for-agent`, `ready
 ### Domain docs
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Time
+
+Always use Indian Standard Time (IST / Asia/Kolkata) for any date, time, or log calculations.
