@@ -50,3 +50,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local agent handoff notes
+.scratch/HANDOFF.md
